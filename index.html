@@ -232,6 +232,7 @@ input,select,textarea{font-family:var(--font);}
 .hmain{flex:1;min-width:0;}
 .hname{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hsub{font-size:12px;color:var(--faint);margin-top:1px;}
+.habit.rest .hicon,.habit.rest .hname,.habit.rest .htrack{opacity:.5;}
 .htrack{height:3px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:7px;overflow:hidden;}
 .hbar{height:100%;border-radius:2px;}
 .hright{display:flex;align-items:center;gap:10px;flex:none;}
@@ -554,6 +555,53 @@ input,select,textarea{font-family:var(--font);}
 .plandone{color:var(--green);font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;justify-content:center;}
 .plandone svg{width:18px;height:18px;}
 
+/* plan summary step */
+.planstep{padding-bottom:8px;}
+.benefits{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:4px;}
+.benefit{
+  display:flex;align-items:center;gap:6px;
+  border:1px solid var(--line);border-radius:999px;background:var(--card);
+  padding:6px 11px;font-size:12px;font-weight:600;white-space:nowrap;
+}
+.benefit svg{width:13px;height:13px;}
+.planrule{height:1px;background:var(--line);margin:24px 10px 0;}
+.plancard{padding:12px;}
+.plangrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ptask{background:var(--card-hi);border-radius:16px;padding:14px 12px;min-width:0;}
+.picon{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;margin-bottom:12px;}
+.picon svg{width:17px;height:17px;}
+.ptname{font-size:16px;font-weight:700;line-height:1.2;overflow-wrap:anywhere;}
+.ptdet{font-size:12px;color:var(--dim);margin-top:4px;}
+.planfoot{
+  display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid var(--line);margin-top:12px;padding:12px 4px 2px;
+  font-size:14px;font-weight:600;color:var(--dim);
+}
+.planfoot span{display:flex;align-items:center;gap:8px;}
+.fdot{width:8px;height:8px;border-radius:50%;flex:none;}
+.reason{
+  width:100%;display:flex;align-items:center;gap:12px;text-align:left;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:15px 16px;margin-bottom:10px;color:var(--dim);font-size:16px;font-weight:600;cursor:pointer;
+}
+.reason span{flex:1;overflow-wrap:anywhere;}
+.reason svg{width:18px;height:18px;flex:none;color:var(--text);}
+.reason.sel{background:var(--card-hi);border-color:var(--violet);color:var(--text);box-shadow:0 0 16px var(--glow);}
+.planmath{font-size:13px;color:var(--faint);margin:12px 2px 0;}
+.planmath b{color:var(--violet-lite);}
+.planCTA{
+  position:sticky;bottom:0;margin:22px -24px 0;
+  padding:18px 24px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,transparent,var(--bg-bot) 26%);
+}
+.planfine{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-top:12px;font-size:13px;font-weight:600;color:var(--dim);
+}
+.planfine svg{width:14px;height:14px;color:var(--green);}
+.planfine svg:last-of-type{color:var(--amber);}
+@media (max-width:340px){.benefit{font-size:11px;padding:5px 9px;}.ptask{padding:12px 10px;}.ptname{font-size:15px;}}
+
 /* ============ MODALS ============ */
 #modals{position:relative;z-index:70;}
 .sheet{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;z-index:70;}
@@ -678,6 +726,11 @@ const I={
   phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M10.5 18.5h3" stroke-linecap="round"/></svg>',
   dumbbell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 8v8M4.5 10v4M17 8v8M19.5 10v4M7 12h10"/></svg>',
   moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.5A8 8 0 0 1 9.5 4.5 8 8 0 1 0 19.5 14.5z"/></svg>',
+  drop:'<svg viewBox="0 0 24 24" aria-hidden="true"><path style="fill:currentColor" d="M12 2.8c0 0 6.3 6.9 6.3 11A6.3 6.3 0 0 1 5.7 13.8c0-4.1 6.3-11 6.3-11z"/></svg>',
+  run:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="15.5" cy="4.6" r="1.9" style="fill:currentColor" stroke="none"/><path d="M9.2 20.5l2.4-4.6-2.7-2.6.8-4.6 3.6-1.4 2.6 2.7 2.9.9"/><path d="M13.3 7.3 8.6 8.9 6.4 12M11.6 15.9l3.5.9 1.6 3.7"/></svg>',
+  productivity:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15.5 9 10l3.5 3.5L20 6"/><path d="M15 6h5v5"/></svg>',
+  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6" style="fill:currentColor" stroke="none"/></svg>',
+  battery:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7.5" width="16" height="9" rx="2.5"/><path d="M21.5 11v2"/><path d="M10.6 9.6 8.2 12.6h3.1l-.7 2.3 3-3.4h-3.1z" style="fill:currentColor" stroke="none"/></svg>',
 };
 
 /* ================= storage (localStorage + memory fallback) ================= */
@@ -734,9 +787,15 @@ const todayIdx=()=>clamp(dayIdxOf(todayKey()),1,DAYS);
 function rel(ts){const s=(Date.now()-ts)/1000;
   if(s<60)return"just now"; if(s<3600)return Math.floor(s/60)+" min ago";
   if(s<86400)return Math.floor(s/3600)+" hr ago"; return Math.floor(s/86400)+" d ago";}
-function fmtSched(t){ if(!t)return"everyday";
+function fmtTime(t){ if(!t)return"";
   const[h,m]=t.split(":").map(Number); const ap=h>=12?"PM":"AM"; const hh=((h+11)%12)+1;
-  return hh+":"+pad(m)+" "+ap+" everyday"; }
+  return m?hh+":"+pad(m)+" "+ap:hh+" "+ap; }
+function fmtSched(h){
+  const freq=h.days?h.days.length+"x/week":"everyday";
+  const amount=h.detail||fmtTime(h.time);
+  return amount?amount+" · "+freq:freq; }
+const WEEK3=[1,3,5];   /* Mon / Wed / Fri for 3x-per-week habits */
+function isSched(h,dk){ return !h.days||h.days.includes(parseKey(dk).getDay()); }
 
 /* ================= state ================= */
 function defaultState(){return{
@@ -880,7 +939,8 @@ function dayStats(dk){
   const t=(di>=1&&di<=DAYS?S.tasks[di]:null)||[];
   const tTot=t.length, tDone=t.filter(x=>x.done).length;
   let hTot=0,hDone=0;
-  for(const h of S.habits){ const n=(h.log&&h.log[dk])||0; hTot+=h.target; hDone+=Math.min(n,h.target); }
+  for(const h of S.habits){ if(!isSched(h,dk)) continue;      /* rest days don't count against you */
+    const n=(h.log&&h.log[dk])||0; hTot+=h.target; hDone+=Math.min(n,h.target); }
   const fmin=S.focus.filter(f=>f.date===dk).reduce((a,f)=>a+f.minutes,0);
   const locked=lockCovers(dk);
   let acc=0,w=0;
@@ -907,10 +967,13 @@ function streak(){ if(!S.user) return 0;
   if(!dayDone(keyOf(d))) d=addDays(d,-1);            // today can still be earned
   while(d>=start&&dayDone(keyOf(d))){n++;d=addDays(d,-1);}
   return n; }
-function habitStreak(h){ let d=sod(new Date()),n=0;
+function habitStreak(h){ let d=sod(new Date()),n=0,guard=0;
   const done=dk=>((h.log&&h.log[dk])||0)>=h.target;
-  if(!done(keyOf(d))) d=addDays(d,-1);
-  while(done(keyOf(d))){n++;d=addDays(d,-1);}
+  if(isSched(h,keyOf(d))&&!done(keyOf(d))) d=addDays(d,-1);   // today can still be earned
+  while(guard++<400){ const dk=keyOf(d);
+    if(!isSched(h,dk)){d=addDays(d,-1);continue;}             // skip rest days
+    if(!done(dk)) break;
+    n++; d=addDays(d,-1); }
   return n; }
 
 function addXp(n){ S.xp=Math.max(0,S.xp+n); }
@@ -1043,11 +1106,11 @@ RENDER.home=function(){
     : `<div class="empty">No goals yet. Add one to give these 60 days a direction.</div>`;
   /* habits */
   const habits=S.habits.length?S.habits.map(h=>{
-    const n=(h.log&&h.log[dk])||0, on=n>=h.target, c=cvar(h.color);
-    return `<div class="card habit" data-act="habitOpen" data-arg="${h.id}">
+    const n=(h.log&&h.log[dk])||0, on=n>=h.target, c=cvar(h.color), rest=!isSched(h,dk);
+    return `<div class="card habit${rest?" rest":""}" data-act="habitOpen" data-arg="${h.id}">
       <div class="hicon" style="background:color-mix(in srgb, ${c} 20%, transparent);color:${c}">${I[h.icon||"bolt"]}</div>
       <div class="hmain"><div class="hname">${esc(h.name)}</div>
-        <div class="hsub">${esc(fmtSched(h.time))}</div>
+        <div class="hsub">${rest?"Rest day · "+esc(fmtSched(h)):esc(fmtSched(h))}</div>
         <div class="htrack"><div class="hbar" style="width:${Math.min(100,100*n/h.target)}%;background:${c};box-shadow:0 0 8px color-mix(in srgb, ${c} 45%, transparent)"></div></div></div>
       <div class="hright"><span class="hcount">${n}/${h.target}</span>
         <button class="ck ${on?"on":""}" style="border-color:${c};${on?`background:${c};`:""}" data-act="habitCheck" data-arg="${h.id}" aria-label="Check ${esc(h.name)}">${I.check}</button></div>
@@ -1076,7 +1139,8 @@ RENDER.home=function(){
     <div class="secrow"><span class="lab">Habits</span><button class="addbtn press" data-act="habitAdd" aria-label="Add habit">${I.plus}</button></div>
     ${habits}
     <div class="secrow"><span class="lab">Today's Plan</span><span class="hcount">${tasks.filter(t=>t.done).length}/${tasks.length}</span></div>
-    ${tlist}`;
+    ${tlist}
+    ${S.user.reason?`<p class="bnote" style="text-align:center;margin:14px 0 0">Your reason: ${esc(S.user.reason)}</p>`:""}`;
   tickLock();
 };
 function tickLock(){
@@ -1460,16 +1524,20 @@ function goalModal(g){
     S.goals=S.goals.filter(x=>x.id!==g.id); save(); m.remove(); RENDER.home(); };
 }
 
-const HABIT_ICONS=["bolt","book","dumbbell","sun","moon","brain","phone","target"];
+const HABIT_ICONS=["bolt","book","dumbbell","run","drop","sun","moon","brain","phone","target"];
 A.habitAdd=()=>habitModal(null);
 A.habitOpen=(d,t,e)=>{ if(e.target.closest("[data-act=habitCheck]"))return;
   habitModal(S.habits.find(h=>h.id===d.arg)); };
 function habitModal(h){
   const isNew=!h;
-  const sel={color:h?h.color:"amber",icon:h?(h.icon||"bolt"):"bolt",target:h?h.target:1};
+  const sel={color:h?h.color:"amber",icon:h?(h.icon||"bolt"):"bolt",target:h?h.target:1,weekly:!!(h&&h.days)};
   const m=modal(`${mhead(isNew?"New Habit":"Edit Habit")}
     <div class="flab">Name</div><input class="inp" id="hn" maxlength="60" placeholder="e.g. Morning run" value="${h?esc(h.name):""}">
+    <div class="flab">Amount (optional)</div><input class="inp" id="hd" maxlength="20" placeholder="e.g. 30m, 2L, 10 pages" value="${h&&h.detail?esc(h.detail):""}">
     <div class="flab">Time</div><input class="inp" type="time" id="ht" value="${h?h.time:"09:00"}">
+    <div class="flab">Frequency</div><div class="chips" id="hfq">
+      <button class="chip press ${sel.weekly?"":"sel"}" data-w="0">Everyday</button>
+      <button class="chip press ${sel.weekly?"sel":""}" data-w="1">3x/week</button></div>
     <div class="flab">Color</div><div class="swatches" id="hsw">
       ${Object.keys(COLORS).map(k=>`<button class="sw press ${sel.color===k?"sel":""}" data-c="${k}" style="background:${cvar(k)}" aria-label="${k}"></button>`).join("")}</div>
     <div class="flab">Icon</div><div class="swatches" id="hic" style="flex-wrap:wrap">
@@ -1482,13 +1550,17 @@ function habitModal(h){
     m.querySelectorAll("#hsw .sw").forEach(x=>x.classList.toggle("sel",x===b));};
   m.querySelector("#hic").onclick=e=>{const b=e.target.closest("[data-i]");if(!b)return;sel.icon=b.dataset.i;
     m.querySelectorAll("#hic .sw").forEach(x=>x.classList.toggle("sel",x===b));};
+  m.querySelector("#hfq").onclick=e=>{const b=e.target.closest("[data-w]");if(!b)return;sel.weekly=b.dataset.w==="1";
+    m.querySelectorAll("#hfq .chip").forEach(x=>x.classList.toggle("sel",x===b));};
   m.querySelector("#hp").onclick=()=>{sel.target=clamp(sel.target+1,1,10);m.querySelector("#htg").textContent=sel.target;};
   m.querySelector("#hm").onclick=()=>{sel.target=clamp(sel.target-1,1,10);m.querySelector("#htg").textContent=sel.target;};
   m.querySelector("#hsave").onclick=()=>{
     const name=m.querySelector("#hn").value.trim()||"New habit";
     const time=m.querySelector("#ht").value||"09:00";
-    if(isNew) S.habits.push({id:uid(),name,color:sel.color,icon:sel.icon,time,schedule:"everyday",target:sel.target,log:{}});
-    else Object.assign(h,{name,time,color:sel.color,icon:sel.icon,target:sel.target});
+    const detail=m.querySelector("#hd").value.trim();
+    const days=sel.weekly?WEEK3:null;
+    if(isNew) S.habits.push({id:uid(),name,detail,color:sel.color,icon:sel.icon,time,days,target:sel.target,log:{}});
+    else Object.assign(h,{name,detail,time,days,color:sel.color,icon:sel.icon,target:sel.target});
     save(); m.remove(); rerender(); };
   if(!isNew) m.querySelector("#hdel").onclick=()=>{
     S.habits=S.habits.filter(x=>x.id!==h.id); save(); m.remove(); rerender(); };
@@ -1593,11 +1665,43 @@ document.addEventListener("keydown",e=>{
   if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches(".lockcirc")){e.preventDefault();A.lockToggle();}
 });
 
+/* ================= PLAN BUILDER ================= */
+const PLAN_LIB={
+  wake:    {name:"Wake up",       detail:"9 AM",     icon:"sun",      color:"amber",  time:"09:00", weekly:false},
+  water:   {name:"Drink water",   detail:"2L",       icon:"drop",     color:"blue",   time:"10:00", weekly:false},
+  sleep:   {name:"Sleep by 11 PM",detail:"11 PM",    icon:"moon",     color:"violet", time:"23:00", weekly:false},
+  cold:    {name:"Cold shower",   detail:"",         icon:"drop",     color:"blue",   time:"07:30", weekly:true },
+  focus:   {name:"Focus session", detail:"25m",      icon:"target",   color:"violet", time:"09:30", weekly:false},
+  nophone: {name:"No phone first hour",detail:"60m", icon:"phone",    color:"green",  time:"09:00", weekly:false},
+  screen:  {name:"Screen limit",  detail:"2h",       icon:"phone",    color:"blue",   time:"20:00", weekly:false},
+  read:    {name:"Read",          detail:"10 pages", icon:"book",     color:"violet", time:"21:00", weekly:false},
+  study:   {name:"Study",         detail:"20m",      icon:"brain",    color:"blue",   time:"18:00", weekly:true },
+  workout: {name:"Workout",       detail:"30m",      icon:"dumbbell", color:"violet", time:"17:00", weekly:true },
+  run:     {name:"Run",           detail:"2.5 km",   icon:"run",      color:"red",    time:"07:00", weekly:true },
+  reach:   {name:"Reach out",     detail:"1 person", icon:"people",   color:"green",  time:"12:00", weekly:true },
+};
+const AREA_PLAN={focus:["focus","nophone"],screen:["screen","nophone"],reading:["read"],
+  study:["study","read"],body:["workout","run"],social:["reach"]};
+const PLAN_FILL=["wake","water","cold","sleep"];
+function buildPlan(areas){
+  const keys=[],add=k=>{if(k&&!keys.includes(k)&&keys.length<6)keys.push(k);};
+  const lists=areas.map(a=>AREA_PLAN[a]||[]);
+  for(let r=0;r<3;r++) for(const l of lists) add(l[r]);
+  for(const k of PLAN_FILL) add(k);
+  return keys.map(k=>Object.assign({key:k},PLAN_LIB[k]));
+}
+const REASONS=["Chase my goals and dreams","Feel proud of myself again","Stop wasting my potential",
+  "Get my energy and health back","Prove I can finish something"];
+const HOURS=[{label:"Under 5",mid:3},{label:"5–10",mid:7},{label:"10–20",mid:15},{label:"20+",mid:25}];
+const BENEFITS=[["Improved Productivity","productivity","--blue"],["Rewire your brain","brain","--amber"],
+  ["Increased Energy","battery","--green"],["Increased Motivation","flame","--violet-lite"],
+  ["Improved Focus","eye","--blue"],["Build Discipline","shield","--red"],["Increased Confidence","star","--amber"]];
+
 /* ================= ONBOARDING ================= */
-const ob={step:0,name:"",areas:new Set(),extreme:false};
+const ob={step:0,name:"",areas:new Set(),extreme:false,plan:[],reason:0,hours:1};
 function renderOnb(){
   const box=$("#onb"); box.hidden=false;
-  const steps=5, bar=`<div class="obar"><div style="width:${(ob.step+1)/steps*100}%"></div></div>`;
+  const steps=6, bar=`<div class="obar"><div style="width:${(ob.step+1)/steps*100}%"></div></div>`;
   let body="";
   if(ob.step===0) body=`
     <div class="ostep"><div class="ohero">
@@ -1625,13 +1729,14 @@ function renderOnb(){
       <button class="modecard press ${ob.extreme?"sel":""}" data-mode="1"><b>${I.bolt.replace("<svg",'<svg style="width:16px;height:16px;color:var(--amber)"')}Extreme</b>
         <p>The streak survives only a 100% day, and leaving mid-focus-session fails it. No mercy.</p></button>
       <div class="ofoot"><button class="btn btn-primary btn-block bigbtn press" id="onext">Continue</button></div></div>`;
-  else body=`
+  else if(ob.step===4) body=`
     <div class="ostep"><div class="ohero">
       <h1 class="oh1">Building your<br><span>60-day plan…</span></h1>
       <div class="planbar"><div id="pbar" style="width:0%"></div></div>
       <div id="pready" style="visibility:hidden"><div class="plandone">${I.check}Plan ready</div>
         <p class="osub" style="margin-top:10px">${[...ob.areas].map(id=>AREAS.find(a=>a.id===id).name).join(" · ")}</p></div>
-    </div><div class="ofoot"><button class="btn btn-primary btn-block bigbtn press" id="onext" disabled style="opacity:.4">Enter Day 1</button></div></div>`;
+    </div><div class="ofoot"><button class="btn btn-primary btn-block bigbtn press" id="onext" disabled style="opacity:.4">See my plan</button></div></div>`;
+  else body=planStepHTML();
   box.innerHTML=bar+body;
   const next=box.querySelector("#onext");
   if(ob.step===1){ const inp=box.querySelector("#oname");
@@ -1648,22 +1753,78 @@ function renderOnb(){
   if(ob.step===3) box.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
     ob.extreme=b.dataset.mode==="1";
     box.querySelectorAll(".modecard").forEach(x=>x.classList.toggle("sel",x===b)); });
-  if(ob.step===4){ let p=0;
+  if(ob.step===4){ ob.plan=buildPlan([...ob.areas]); let p=0;
     const iv=setInterval(()=>{ p+=REDUCED()?100:7+Math.random()*9;
       const bar2=box.querySelector("#pbar"); if(!bar2){clearInterval(iv);return;}
       bar2.style.width=Math.min(100,p)+"%";
       if(p>=100){ clearInterval(iv);
         box.querySelector("#pready").style.visibility="visible";
         next.disabled=false; next.style.opacity=1; } },120); }
+  if(ob.step===5) wirePlanStep(box);
   next.onclick=()=>{
     if(next.disabled) return;
     if(ob.step===1){ ob.name=box.querySelector("#oname").value.trim()||"Climber"; }
-    if(ob.step===4){ finishOnb(); return; }
+    if(ob.step===5){ finishOnb(); return; }
     ob.step++; renderOnb(); };
+}
+
+/* ---- plan summary step ---- */
+function planStepHTML(){
+  const chips=BENEFITS.map(([label,ic,cv])=>`
+    <span class="benefit" style="border-color:var(${cv});color:var(--text)">
+      <span style="color:var(${cv});display:flex">${I[ic]}</span>${label}</span>`).join("");
+  const tasks=ob.plan.map(t=>{const c=cvar(t.color);
+    return `<div class="ptask">
+      <div class="picon" style="background:color-mix(in srgb, ${c} 20%, transparent);color:${c}">${I[t.icon]}</div>
+      <div class="ptname">${esc(t.name)}</div>
+      <div class="ptdet">${esc(t.detail?t.detail+" · ":"")}${t.weekly?"3x/week":"everyday"}</div>
+    </div>`;}).join("");
+  const reasons=REASONS.map((r,i)=>`
+    <button class="reason press ${ob.reason===i?"sel":""}" data-reason="${i}">
+      <span>${r}</span>${ob.reason===i?I.check:""}</button>`).join("");
+  const hours=HOURS.map((h,i)=>`<button class="chip press ${ob.hours===i?"sel":""}" data-hours="${i}">${h.label}</button>`).join("");
+  const lost=Math.round(HOURS[ob.hours].mid*60/7);
+  return `<div class="ostep planstep">
+    <h1 class="oh1" style="margin-bottom:16px">Your plan is<br><span>ready, ${esc(ob.name||"friend")}.</span></h1>
+    <div class="benefits">${chips}</div>
+    <div class="planrule"></div>
+    <div class="secrow" style="margin-top:22px"><h2 class="h20" style="margin:0">Your Plan</h2>
+      <span class="countpill">${ob.plan.length} Tasks</span></div>
+    <div class="card plancard">
+      <div class="plangrid">${tasks}</div>
+      <div class="planfoot">
+        <span><span class="fdot" style="background:${ob.extreme?"var(--red)":"var(--amber)"}"></span>${ob.extreme?"Hard":"Medium"}</span>
+        <span>Week 1</span></div>
+    </div>
+    <div class="lab" style="margin:22px 0 10px">Your biggest reason</div>
+    <div id="reasons">${reasons}</div>
+    <div class="lab" style="margin:22px 0 10px">How many hours you waste on distractions in a week?</div>
+    <div class="chips" id="hourchips">${hours}</div>
+    <p class="planmath" id="planmath">That's about <b>${lost} hours</b> over the next 60 days — this plan is what you spend them on instead.</p>
+    <div class="planCTA">
+      <button class="btn btn-primary btn-block bigbtn press" id="onext">Start My Transformation</button>
+      <div class="planfine">${I.check}No signup&nbsp;&nbsp;·&nbsp;&nbsp;${I.shield}Reset Your Life</div>
+    </div></div>`;
+}
+function wirePlanStep(box){
+  box.querySelector("#reasons").onclick=e=>{const b=e.target.closest("[data-reason]");if(!b)return;
+    ob.reason=Number(b.dataset.reason);
+    box.querySelectorAll("[data-reason]").forEach(x=>{ const on=x===b;
+      x.classList.toggle("sel",on);
+      const mark=x.querySelector("svg"); if(on&&!mark) x.insertAdjacentHTML("beforeend",I.check);
+      if(!on&&mark) mark.remove(); });};
+  box.querySelector("#hourchips").onclick=e=>{const b=e.target.closest("[data-hours]");if(!b)return;
+    ob.hours=Number(b.dataset.hours);
+    box.querySelectorAll("[data-hours]").forEach(x=>x.classList.toggle("sel",x===b));
+    box.querySelector("#planmath").innerHTML=
+      `That's about <b>${Math.round(HOURS[ob.hours].mid*60/7)} hours</b> over the next 60 days — this plan is what you spend them on instead.`;};
 }
 function finishOnb(){
   S.user={name:ob.name||"Climber",avatarSeed:Math.floor(Math.random()*AVA_GRADS.length),
-    startDate:todayKey(),extreme:ob.extreme,areas:[...ob.areas]};
+    startDate:todayKey(),extreme:ob.extreme,areas:[...ob.areas],
+    reason:REASONS[ob.reason],distractionHours:HOURS[ob.hours].label};
+  S.habits=ob.plan.map(t=>({id:uid(),name:t.name,detail:t.detail,color:t.color,icon:t.icon,
+    time:t.time,days:t.weekly?WEEK3:null,target:1,log:{}}));
   ensureAllTasks(); save();
   $("#onb").hidden=true; boot(false);
 }
