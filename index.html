@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>ASCEND — 60-Day Lock In</title>
+<style>
+/* ============ 1. DESIGN TOKENS ============ */
+:root{
+  /* background */
+  --bg-top:    #0A0613;
+  --bg-bot:    #1A1033;
+  --card:      #150E28;
+  --card-hi:   #1E1540;
+  --line:      rgba(139,92,246,0.16);
+  /* text */
+  --text:      #F4F1FB;
+  --dim:       #A79CC7;
+  --faint:     #6B6288;
+  /* accents */
+  --violet:      #7C3AED;
+  --violet-lite: #A78BFA;
+  --glow:        rgba(124,58,237,0.45);
+  --green:       #34D399;
+  --amber:       #F59E0B;
+  --blue:        #3B82F6;
+  --red:         #EF4444;
+  /* badge tier tokens (own badge art, not in the measured palette) */
+  --silver:    #B9BFD4;
+  --bronze:    #C98A5B;
+  --font: -apple-system,"SF Pro Display",Inter,system-ui,sans-serif;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{color-scheme:dark;}
+html,body{height:100%;}
+body{
+  margin:0;
+  color:var(--text);
+  font-family:var(--font);
+  font-size:15px;line-height:1.45;font-weight:400;
+  background:linear-gradient(180deg,var(--bg-top) 0%,var(--bg-bot) 100%) fixed var(--bg-top);
+  overflow-x:hidden;
+}
+::selection{background:var(--violet);color:var(--text);}
+button{font-family:var(--font);color:inherit;}
+input,select,textarea{font-family:var(--font);}
+:focus{outline:none;}
+:focus-visible{outline:2px solid var(--violet-lite);outline-offset:2px;border-radius:6px;}
+
+/* ============ background fx: starfield + diagonals ============ */
+#bgfx{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+.star{position:absolute;border-radius:50%;background:rgba(255,255,255,1);}
+.star.tw{animation:twinkle 4.5s ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:var(--so,.2);}50%{opacity:.55;}}
+.slash{
+  position:absolute;left:-60%;width:240%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(167,139,250,.10) 30%,rgba(167,139,250,.10) 70%,transparent);
+  transform:rotate(-26deg);
+}
+
+/* ============ 2. APP SHELL ============ */
+#app{position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100dvh;}
+#topbar{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:calc(10px + env(safe-area-inset-top)) 20px 10px;
+  background:rgba(10,6,19,.72);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+.logo{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;letter-spacing:.06em;}
+.logo svg{width:22px;height:22px;display:block;}
+.topright{display:flex;align-items:center;gap:10px;}
+.streak{
+  display:flex;align-items:center;gap:5px;
+  border:1px solid var(--amber);border-radius:999px;background:transparent;
+  padding:5px 11px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;
+}
+.streak svg{width:14px;height:14px;color:var(--amber);}
+.avatar{
+  width:34px;height:34px;border-radius:50%;flex:none;
+  display:grid;place-items:center;font-size:14px;font-weight:700;color:var(--text);
+  border:1px solid var(--line);
+}
+
+#views{padding:0 20px calc(88px + env(safe-area-inset-bottom));}
+.view{display:none;}
+.view.on{display:block;animation:vin .18s ease;}
+@keyframes vin{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* bottom navigation */
+#tabbar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;z-index:30;
+  display:flex;
+  background:rgba(10,6,19,.9);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--line);
+  padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:none;border:0;padding:4px 0;cursor:pointer;
+  color:var(--faint);font-size:10px;font-weight:600;line-height:1;
+}
+.tab svg{width:22px;height:22px;}
+.tab.active{color:var(--violet);}
+
+/* ============ shared type + surfaces ============ */
+.vtitle{font-size:30px;font-weight:700;line-height:1.1;margin:10px 0 18px;}
+.microlabel{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+.lab{font-size:13px;font-weight:600;color:var(--dim);}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:16px;margin-bottom:12px;position:relative;
+}
+.subcard{background:var(--card-hi);border:1px solid var(--line);border-radius:16px;padding:12px;}
+.secrow{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px;}
+.addbtn{
+  width:28px;height:28px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card-hi);color:var(--violet-lite);display:grid;place-items:center;cursor:pointer;
+}
+.addbtn svg{width:14px;height:14px;}
+.empty{
+  border:1px dashed var(--line);border-radius:16px;padding:20px 16px;
+  color:var(--faint);font-size:13px;text-align:center;margin-bottom:12px;
+}
+
+/* press feedback */
+.press{transition:transform .09s ease,filter .09s ease;cursor:pointer;}
+.press:active{transform:scale(.97);filter:brightness(1.15);}
+
+/* buttons */
+.btn{
+  border:0;border-radius:16px;padding:0 18px;height:46px;
+  font-size:15px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn svg{width:18px;height:18px;flex:none;}
+.btn-primary{background:var(--violet);color:var(--text);box-shadow:0 0 24px var(--glow);}
+.btn-ghost{background:var(--card-hi);color:var(--text);border:1px solid var(--line);}
+.btn-danger{background:transparent;color:var(--red);border:1px solid var(--red);}
+.btn-block{width:100%;}
+.bigbtn{height:54px;font-size:16px;font-weight:700;}
+.pillbtn{
+  display:flex;align-items:center;gap:4px;margin:12px auto;width:max-content;
+  border:1px solid var(--line);border-radius:999px;background:transparent;
+  padding:8px 16px;color:var(--dim);font-size:13px;font-weight:600;cursor:pointer;
+  white-space:nowrap;
+}
+.pillbtn svg{width:14px;height:14px;flex:none;}
+
+/* chips */
+.chips{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{
+  border-radius:999px;padding:9px 16px;border:1px solid var(--line);
+  background:var(--card);color:var(--dim);font-size:13px;font-weight:600;cursor:pointer;
+}
+.chip.sel{background:var(--violet);color:var(--text);border-color:transparent;}
+
+/* ============ 3.1 HOME ============ */
+.weekrow{display:flex;justify-content:space-between;margin:6px 0 4px;}
+.wcol{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.wkday{font-size:11px;font-weight:600;letter-spacing:.12em;color:var(--faint);}
+.wkc{
+  width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
+  border:1px solid var(--line);color:var(--faint);font-size:13px;
+}
+.wkc svg{width:16px;height:16px;}
+.wkc.done{background:var(--violet);border-color:var(--violet);color:var(--text);}
+.wkc.fut{opacity:.4;}
+.wkc.today{border:2px solid var(--violet-lite);color:var(--dim);}
+.wkc.today.done{background:var(--violet);color:var(--text);}
+@media (max-width:340px){.wkc{width:34px;height:34px;}}
+
+.lockwrap{display:flex;flex-direction:column;align-items:center;padding:22px 0 8px;}
+.lockcirc{
+  width:200px;height:200px;border-radius:50%;
+  border:2px solid var(--violet);
+  background:radial-gradient(circle at 50% 40%,rgba(124,58,237,.40),rgba(124,58,237,.10) 58%,transparent 76%);
+  display:grid;place-items:center;cursor:pointer;
+  box-shadow:0 0 24px var(--glow);
+}
+.lockcirc svg{width:56px;height:56px;color:var(--text);}
+.lockcirc.on{animation:lockpulse 4s ease-in-out infinite;}
+@keyframes lockpulse{0%,100%{box-shadow:0 0 24px var(--glow);}50%{box-shadow:0 0 46px var(--glow);}}
+.lockcirc.off{
+  border-color:var(--line);box-shadow:none;
+  background:radial-gradient(circle at 50% 40%,rgba(124,58,237,.16),transparent 70%);
+}
+.lockcirc.off svg{color:var(--faint);}
+.locklabel{margin-top:16px;font-size:13px;font-weight:600;color:var(--violet-lite);}
+.lockbig{font-size:48px;font-weight:800;line-height:1.1;letter-spacing:-.01em;}
+.lockbig small{font-size:26px;font-weight:700;color:var(--dim);margin-left:4px;}
+.lockpill{
+  margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:999px;
+  padding:7px 16px;font-size:14px;font-weight:600;color:var(--dim);
+  font-variant-numeric:tabular-nums;
+}
+.lockoff-label{margin-top:16px;font-size:15px;color:var(--faint);}
+.lockstart{margin-top:12px;}
+
+.blockedhead{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--dim);}
+.bdot{width:8px;height:8px;border-radius:50%;background:var(--violet);box-shadow:0 0 8px var(--glow);}
+.bchips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none;}
+.bchips::-webkit-scrollbar{display:none;}
+.bchip{
+  flex:none;display:flex;align-items:center;gap:6px;
+  background:var(--card-hi);border:1px solid var(--line);border-radius:999px;
+  padding:7px 13px;font-size:13px;font-weight:600;color:var(--dim);white-space:nowrap;
+}
+.bchip svg{width:13px;height:13px;color:var(--faint);}
+.bnote{font-size:11px;color:var(--faint);margin-top:6px;}
+
+.goal{overflow:hidden;padding-bottom:20px;cursor:pointer;}
+.gtop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.gtitle{font-size:17px;font-weight:600;overflow-wrap:anywhere;}
+.gdays{font-size:12px;color:var(--faint);margin-top:3px;}
+.gpct{
+  flex:none;border-radius:999px;padding:4px 11px;font-size:12px;font-weight:600;
+  background:var(--violet);color:var(--text);
+}
+.gpct.full{background:var(--green);color:var(--bg-top);}
+.gtrack{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.08);}
+.gbar{height:100%;background:var(--violet);box-shadow:0 0 10px var(--glow);}
+.gbar.full{background:var(--green);box-shadow:0 0 10px rgba(52,211,153,.45);}
+
+.habit{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;}
+.hicon{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;}
+.hicon svg{width:15px;height:15px;}
+.hmain{flex:1;min-width:0;}
+.hname{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hsub{font-size:12px;color:var(--faint);margin-top:1px;}
+.htrack{height:3px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:7px;overflow:hidden;}
+.hbar{height:100%;border-radius:2px;}
+.hright{display:flex;align-items:center;gap:10px;flex:none;}
+.hcount{font-size:12px;font-weight:600;color:var(--dim);font-variant-numeric:tabular-nums;}
+.ck{
+  width:28px;height:28px;border-radius:50%;flex:none;cursor:pointer;
+  border:2px solid var(--faint);background:transparent;color:transparent;
+  display:grid;place-items:center;padding:0;
+  transition:transform .09s ease;
+}
+.ck svg{width:13px;height:13px;}
+.ck:active{transform:scale(.9);}
+.ck.on{color:var(--text);animation:ckpop .25s ease;}
+@keyframes ckpop{0%{transform:scale(.4);}70%{transform:scale(1.14);}100%{transform:scale(1);}}
+.burst{animation:burst .45s ease;}
+@keyframes burst{0%{box-shadow:0 0 0 0 var(--glow);}100%{box-shadow:0 0 0 14px rgba(124,58,237,0);}}
+
+.task{display:flex;align-items:center;gap:12px;padding:12px 16px;}
+.ttitle{flex:1;min-width:0;font-size:15px;font-weight:600;overflow-wrap:anywhere;}
+.ttitle.done{color:var(--faint);text-decoration:line-through;}
+.tcat{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:1px;}
+
+/* ============ 3.2 FOCUS ============ */
+.fscard{display:flex;align-items:center;gap:16px;}
+.ringwrap{position:relative;width:80px;height:80px;flex:none;}
+.ringwrap svg{width:80px;height:80px;transform:rotate(-90deg);}
+.ringc{fill:none;stroke:rgba(255,255,255,.08);stroke-width:6;}
+.ringv{fill:none;stroke:var(--green);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .4s ease;}
+.ringtxt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ringnum{font-size:28px;font-weight:800;line-height:1;}
+.ringlab{font-size:10px;color:var(--faint);margin-top:2px;}
+.fstitle{font-size:17px;font-weight:600;}
+.fsstatus{font-size:13px;color:var(--dim);margin-top:3px;}
+.sesscard .lab{font-size:12px;}
+.sessnum{font-size:24px;font-weight:700;margin-top:4px;}
+
+/* focus overlay */
+#overlay[hidden]{display:none;}
+#overlay{
+  position:fixed;inset:0;z-index:60;
+  background:linear-gradient(180deg,var(--bg-top),var(--bg-bot));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;text-align:center;
+}
+.ovlabel{font-size:13px;font-weight:600;color:var(--violet-lite);letter-spacing:.12em;text-transform:uppercase;}
+.ovclock{font-size:72px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em;margin:14px 0 6px;}
+.ovsub{font-size:13px;color:var(--faint);max-width:260px;}
+.ovring{
+  width:230px;height:230px;border-radius:50%;border:2px solid var(--violet);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 42%,rgba(124,58,237,.35),transparent 72%);
+  box-shadow:0 0 24px var(--glow);animation:lockpulse 4s ease-in-out infinite;
+  margin-bottom:28px;
+}
+.ovring .ovclock{font-size:52px;margin:6px 0 2px;}
+.ovdone{font-size:44px;font-weight:800;color:var(--green);}
+
+/* ============ 3.3 PROGRESS ============ */
+.prow{display:flex;justify-content:space-between;align-items:baseline;margin:12px 0 6px;}
+.pday{font-size:22px;font-weight:700;}
+.pday span{color:var(--faint);font-weight:600;}
+.pclock{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--dim);}
+.psub{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:8px;display:flex;justify-content:space-between;}
+
+.badgewrap{display:flex;flex-direction:column;align-items:center;padding:14px 0 6px;}
+.badgering{position:relative;width:180px;height:180px;}
+.badgering > svg.arc{position:absolute;inset:0;transform:rotate(-90deg);}
+.arcbg{fill:none;stroke:rgba(255,255,255,.07);stroke-width:3;}
+.arcfg{fill:none;stroke:var(--violet);stroke-width:3;stroke-linecap:round;}
+.badgeart{position:absolute;inset:0;display:grid;place-items:center;}
+.badgeart svg{width:112px;height:112px;filter:drop-shadow(0 0 18px var(--glow));}
+.badgename{margin-top:14px;font-size:17px;font-weight:600;color:var(--violet-lite);}
+.rrpill{
+  margin-top:8px;display:flex;align-items:center;gap:6px;
+  background:var(--card);border:1px solid var(--line);border-radius:999px;
+  padding:6px 14px;font-size:13px;font-weight:700;
+}
+.rrpill svg{width:13px;height:13px;color:var(--violet-lite);}
+
+.linkcard{
+  display:flex;align-items:center;gap:10px;width:100%;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:14px 16px;margin:14px 0 12px;font-size:15px;font-weight:600;color:var(--text);
+  cursor:pointer;text-align:left;
+}
+.linkcard svg{width:18px;height:18px;color:var(--violet-lite);}
+.linkcard .spacer{flex:1;}
+.linkcard .chev{color:var(--faint);}
+
+.cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.cardhead h3{margin:0;font-size:17px;font-weight:600;}
+.cardhead .r{font-size:12px;color:var(--faint);font-weight:600;}
+.grid60{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;}
+.g60{aspect-ratio:1;border-radius:6px;background:rgba(255,255,255,.06);}
+.g60.full{background:var(--violet);box-shadow:0 0 6px var(--glow);}
+.g60.part{background:rgba(124,58,237,.35);}
+.g60.fut{background:transparent;border:1px solid var(--line);}
+.g60.todayempty{background:transparent;border:1px solid var(--violet-lite);}
+
+.heathead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.heathead h3{margin:0;font-size:17px;font-weight:600;}
+.heatstats{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.heatstats .hs1{font-size:15px;font-weight:600;}
+.heatstats .hs2{font-size:11px;color:var(--faint);}
+.minipill{
+  display:flex;align-items:center;gap:4px;border:1px solid var(--amber);border-radius:999px;
+  padding:3px 9px;font-size:12px;font-weight:600;
+}
+.minipill svg{width:11px;height:11px;color:var(--amber);}
+.heatbody{display:flex;gap:6px;}
+.heatdays{display:grid;grid-template-rows:repeat(7,1fr);gap:4px;flex:none;}
+.heatdays span{font-size:9px;font-weight:600;color:var(--faint);display:flex;align-items:center;justify-content:center;width:10px;}
+.heatgrid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:4px;flex:1;}
+.hcell{aspect-ratio:1;border-radius:5px;background:rgba(255,255,255,.05);min-width:0;}
+.hcell.fut{background:transparent;border:1px solid rgba(139,92,246,.08);}
+.morebtn{
+  margin:12px auto 0;display:block;border:1px solid var(--line);border-radius:999px;
+  background:transparent;color:var(--dim);font-size:12px;font-weight:600;
+  padding:6px 18px;cursor:pointer;
+}
+
+/* ============ 3.4 INSIGHTS ============ */
+.backrow{display:flex;align-items:center;margin:10px 0 18px;position:relative;justify-content:center;}
+.backrow h2{margin:0;font-size:17px;font-weight:600;}
+.backbtn{
+  position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+  background:var(--card);color:var(--text);display:grid;place-items:center;cursor:pointer;
+}
+.backbtn svg{width:16px;height:16px;}
+.ratbig{font-size:46px;font-weight:800;line-height:1.05;margin:6px 0 2px;}
+.ratbig small{font-size:24px;font-weight:700;color:var(--dim);}
+.ratxp{font-size:13px;color:var(--dim);}
+.rattrack{height:4px;border-radius:2px;background:rgba(255,255,255,.08);margin:12px 0 8px;overflow:hidden;}
+.ratbar{height:100%;background:var(--violet);box-shadow:0 0 10px var(--glow);}
+.ratnote{font-size:11px;color:var(--faint);}
+.h20{font-size:20px;font-weight:700;margin:20px 0 12px;}
+.attrs{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.attr{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;}
+.attrtop{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);font-weight:600;}
+.attrtop svg{width:13px;height:13px;}
+.attrnum{font-size:30px;font-weight:800;margin:8px 0 10px;}
+.attrtrack{height:3px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;}
+.attrbar{height:100%;border-radius:2px;}
+
+/* ============ 3.5 RANK LADDER ============ */
+.ladder{position:relative;padding:10px 0 30px;}
+.lpath{
+  position:absolute;left:50%;top:0;bottom:0;width:40px;transform:translateX(-50%);
+  background:linear-gradient(180deg,rgba(124,58,237,0),rgba(124,58,237,.38) 6%,rgba(124,58,237,.38) 94%,rgba(124,58,237,0));
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 35%,#000 65%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 35%,#000 65%,transparent);
+}
+.lrow{
+  position:relative;display:grid;grid-template-columns:1fr 76px 1fr;align-items:center;
+  padding:9px 4px;border-radius:16px;margin-bottom:4px;
+}
+.lrow.me{background:var(--card-hi);border:1px solid var(--violet);box-shadow:0 0 24px var(--glow);}
+.lbadge{display:grid;place-items:center;}
+.lbadge svg{width:52px;height:52px;filter:drop-shadow(0 0 8px rgba(124,58,237,.35));}
+.lname{font-size:15px;font-weight:700;}
+.lstats .lrr{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;}
+.lstats .lpct{font-size:11px;color:var(--faint);margin-top:1px;}
+.lcell-l{text-align:right;padding-right:6px;}
+.lcell-r{text-align:left;padding-left:6px;}
+
+/* ============ 3.6 COMMUNITY ============ */
+.commhead{display:flex;align-items:center;justify-content:space-between;margin:10px 0 14px;}
+.commhead h1{margin:0;font-size:30px;font-weight:700;}
+.cicons{display:flex;gap:8px;}
+.cico{
+  width:36px;height:36px;border-radius:50%;border:1px solid var(--line);
+  background:var(--card);color:var(--dim);display:grid;place-items:center;cursor:pointer;
+}
+.cico svg{width:17px;height:17px;}
+.filter{
+  display:flex;align-items:center;gap:6px;margin-bottom:14px;
+  border:1px solid var(--line);border-radius:999px;background:var(--card);
+  padding:7px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;width:max-content;
+}
+.filter svg{width:12px;height:12px;color:var(--faint);}
+.post{cursor:pointer;}
+.phead{display:flex;align-items:center;gap:9px;}
+.pava{width:36px;height:36px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:14px;font-weight:700;}
+.pmeta{flex:1;min-width:0;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.pname{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:14ch;}
+.prank{font-size:13px;color:var(--violet-lite);font-weight:600;display:flex;align-items:center;gap:4px;}
+.prank svg{width:14px;height:14px;}
+.pvote{
+  flex:none;display:flex;flex-direction:column;align-items:center;gap:1px;
+  background:none;border:0;color:var(--faint);cursor:pointer;padding:2px 6px;
+}
+.pvote svg{width:16px;height:16px;}
+.pvote b{font-size:13px;font-weight:700;}
+.pvote.voted{color:var(--violet-lite);}
+.pts{font-size:11px;color:var(--faint);margin:7px 0 5px;}
+.ptitle{font-size:17px;font-weight:600;overflow-wrap:anywhere;}
+.pbody{
+  font-size:15px;color:var(--dim);margin-top:4px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.pfoot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;}
+.pwm{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--faint);}
+.pwm svg{width:12px;height:12px;}
+.pcom{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--dim);}
+.pcom svg{width:14px;height:14px;}
+.commnote{text-align:center;font-size:11px;color:var(--faint);padding:8px 0 16px;}
+.comment{padding:10px 0;border-top:1px solid var(--line);}
+.comment .ca{font-size:13px;font-weight:600;}
+.comment .ct{font-size:11px;color:var(--faint);margin-left:6px;font-weight:400;}
+.comment p{margin:3px 0 0;font-size:14px;color:var(--dim);}
+
+/* ============ 3.7 LIBRARY ============ */
+.libtabs{display:flex;gap:22px;margin-bottom:16px;}
+.libtab{
+  background:none;border:0;padding:0 2px 9px;cursor:pointer;
+  font-size:15px;font-weight:600;color:var(--dim);
+  border-bottom:3px solid transparent;
+}
+.libtab.active{color:var(--text);border-bottom-color:var(--violet);}
+.feat{display:flex;gap:14px;cursor:pointer;}
+.fcover{
+  width:90px;height:130px;flex:none;border-radius:12px;
+  display:flex;align-items:flex-end;padding:8px;
+  font-size:11px;font-weight:700;line-height:1.25;color:var(--text);
+  text-shadow:0 1px 4px rgba(10,6,19,.6);
+}
+.fmain{flex:1;min-width:0;display:flex;flex-direction:column;}
+.ftitle{font-size:19px;font-weight:700;line-height:1.2;}
+.fauthor{font-size:14px;color:var(--dim);margin-top:2px;}
+.fdesc{
+  font-size:13px;color:var(--dim);margin-top:6px;flex:1;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.ffoot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+.fpages{font-size:12px;color:var(--faint);}
+.fread{font-size:13px;font-weight:600;color:var(--violet);background:none;border:0;cursor:pointer;padding:0;}
+.countpill{
+  border:1px solid var(--line);border-radius:999px;background:var(--card);
+  padding:4px 11px;font-size:12px;font-weight:600;color:var(--dim);
+}
+.bookgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.bk{cursor:pointer;}
+.bkcover{
+  aspect-ratio:9/13;border-radius:12px;
+  display:flex;align-items:flex-end;padding:10px;
+  font-size:13px;font-weight:700;line-height:1.25;color:var(--text);
+  text-shadow:0 1px 4px rgba(10,6,19,.6);position:relative;overflow:hidden;
+}
+.bkdone{
+  position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;
+  background:var(--green);color:var(--bg-top);display:grid;place-items:center;
+}
+.bkdone svg{width:11px;height:11px;}
+.bkname{font-size:14px;font-weight:600;margin-top:8px;line-height:1.25;}
+.bkauthor{font-size:12px;color:var(--faint);margin-top:1px;}
+.bkprog{height:3px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:7px;overflow:hidden;}
+.bkprog div{height:100%;background:var(--violet);}
+
+/* reader */
+.rdtrack{height:4px;border-radius:2px;background:rgba(255,255,255,.08);margin-bottom:18px;overflow:hidden;}
+.rdbar{height:100%;background:var(--violet);box-shadow:0 0 10px var(--glow);transition:width .3s ease;}
+.rdtitle{font-size:19px;font-weight:700;}
+.rdauthor{font-size:13px;color:var(--dim);margin:2px 0 16px;}
+.rdpage{font-size:15px;line-height:1.65;color:var(--text);min-height:44vh;animation:vin .18s ease;}
+.rdpage p{margin:0 0 14px;}
+.rdctl{display:flex;align-items:center;justify-content:space-between;margin-top:20px;}
+.rdnum{font-size:12px;color:var(--faint);font-weight:600;}
+.rdbtn{
+  width:44px;height:44px;border-radius:50%;border:1px solid var(--line);
+  background:var(--card);color:var(--text);display:grid;place-items:center;cursor:pointer;
+}
+.rdbtn:disabled{opacity:.3;cursor:default;}
+.rdbtn svg{width:17px;height:17px;}
+
+/* ============ 3.8 ONBOARDING ============ */
+#onb[hidden]{display:none;}
+#onb{min-height:100dvh;display:flex;flex-direction:column;padding:calc(20px + env(safe-area-inset-top)) 24px calc(28px + env(safe-area-inset-bottom));position:relative;z-index:1;max-width:480px;margin:0 auto;}
+.obar{height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:36px;}
+.obar div{height:100%;background:var(--violet);box-shadow:0 0 10px var(--glow);transition:width .3s ease;}
+.ostep{flex:1;display:flex;flex-direction:column;animation:vin .18s ease;}
+.ohero{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;}
+.ohero .biglock{
+  width:120px;height:120px;border-radius:50%;border:2px solid var(--violet);
+  display:grid;place-items:center;box-shadow:0 0 24px var(--glow);
+  background:radial-gradient(circle at 50% 40%,rgba(124,58,237,.4),transparent 72%);
+  margin-bottom:28px;
+}
+.ohero .biglock svg{width:44px;height:44px;}
+.oh1{font-size:30px;font-weight:700;line-height:1.15;margin:0 0 10px;}
+.oh1 span{color:var(--violet-lite);}
+.osub{font-size:15px;color:var(--dim);max-width:300px;margin:0 auto;}
+.oinp{
+  width:100%;background:var(--card-hi);border:1px solid var(--line);border-radius:16px;
+  padding:15px 16px;color:var(--text);font-size:17px;font-weight:600;margin-top:20px;
+}
+.oinp::placeholder{color:var(--faint);font-weight:400;}
+.areagrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+.area{
+  background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:16px 14px;cursor:pointer;text-align:left;color:var(--text);
+}
+.area svg{width:20px;height:20px;color:var(--dim);margin-bottom:8px;}
+.area b{display:block;font-size:14px;font-weight:600;}
+.area span{display:block;font-size:11px;color:var(--faint);margin-top:2px;}
+.area.sel{background:var(--card-hi);border-color:var(--violet);box-shadow:0 0 12px var(--glow);}
+.area.sel svg{color:var(--violet-lite);}
+.modecard{
+  width:100%;background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:18px 16px;cursor:pointer;text-align:left;color:var(--text);margin-top:12px;
+}
+.modecard b{font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.modecard b svg{width:16px;height:16px;}
+.modecard p{margin:6px 0 0;font-size:13px;color:var(--dim);}
+.modecard.sel{background:var(--card-hi);border-color:var(--violet);box-shadow:0 0 16px var(--glow);}
+.ofoot{margin-top:26px;}
+.ocount{text-align:center;font-size:12px;color:var(--faint);margin-bottom:10px;}
+.planbar{height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;margin:26px 0 14px;width:100%;}
+.planbar div{height:100%;background:var(--violet);box-shadow:0 0 10px var(--glow);transition:width .25s linear;}
+.plandone{color:var(--green);font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;justify-content:center;}
+.plandone svg{width:18px;height:18px;}
+
+/* ============ MODALS ============ */
+#modals{position:relative;z-index:70;}
+.sheet{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;z-index:70;}
+.sheet .back{position:absolute;inset:0;background:rgba(5,3,10,.65);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+.sheet .panel{
+  position:relative;width:100%;max-width:480px;max-height:82dvh;overflow-y:auto;
+  background:var(--card);border:1px solid var(--line);border-bottom:0;
+  border-radius:24px 24px 0 0;
+  padding:20px 20px calc(24px + env(safe-area-inset-bottom));
+  animation:sheetup .18s ease;
+}
+@keyframes sheetup{from{transform:translateY(24px);opacity:0;}to{transform:none;opacity:1;}}
+.mtitle{font-size:17px;font-weight:600;margin:0 0 16px;display:flex;align-items:center;justify-content:space-between;}
+.mx{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--card-hi);color:var(--dim);display:grid;place-items:center;cursor:pointer;}
+.mx svg{width:13px;height:13px;}
+.flab{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:14px 0 6px;}
+.inp{
+  width:100%;background:var(--card-hi);border:1px solid var(--line);border-radius:12px;
+  padding:12px 14px;color:var(--text);font-size:15px;
+}
+.inp::placeholder{color:var(--faint);}
+textarea.inp{resize:vertical;min-height:88px;}
+.btnrow{display:flex;gap:10px;margin-top:20px;}
+.btnrow .btn{flex:1;}
+.swatches{display:flex;gap:10px;}
+.sw{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;}
+.sw.sel{border-color:var(--text);box-shadow:0 0 10px var(--glow);}
+.stepper{display:flex;align-items:center;gap:14px;}
+.stepper button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card-hi);color:var(--text);font-size:17px;cursor:pointer;}
+.stepper b{font-size:17px;min-width:2ch;text-align:center;}
+.blist{margin:0;padding:0;list-style:none;}
+.blist li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);}
+.blist li span{flex:1;font-size:15px;font-weight:600;overflow-wrap:anywhere;}
+.bdel{width:28px;height:28px;border-radius:50%;border:1px solid var(--red);background:transparent;color:var(--red);display:grid;place-items:center;cursor:pointer;}
+.bdel svg{width:12px;height:12px;}
+.addrow{display:flex;gap:8px;margin-top:14px;}
+.addrow .inp{flex:1;}
+.sessrow{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px;}
+.sessrow .d{color:var(--dim);}
+.sessrow .ok{color:var(--green);font-weight:600;}
+.sessrow .bad{color:var(--red);font-weight:600;}
+input[type=range]{accent-color:var(--violet);width:100%;}
+input[type=date],input[type=time]{color-scheme:dark;}
+
+/* ============ MOTION / A11Y ============ */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}
+  .press:active{transform:none;}
+  .view.on,.rdpage,.ostep{animation:none;}
+  .star.tw{animation:none;}
+}
+</style>
+</head>
+<body>
+<div id="bgfx" aria-hidden="true"></div>
+<div id="app">
+  <div id="onb" hidden></div>
+  <div id="shell" hidden>
+    <header id="topbar">
+      <div class="logo" id="logobox"></div>
+      <div class="topright">
+        <div class="streak" id="streakpill" title="Current streak"></div>
+        <div class="avatar" id="avatarbox" aria-label="Profile"></div>
+      </div>
+    </header>
+    <main id="views">
+      <section class="view" id="view-home"></section>
+      <section class="view" id="view-focus"></section>
+      <section class="view" id="view-progress"></section>
+      <section class="view" id="view-insights"></section>
+      <section class="view" id="view-ladder"></section>
+      <section class="view" id="view-community"></section>
+      <section class="view" id="view-library"></section>
+      <section class="view" id="view-reader"></section>
+    </main>
+    <nav id="tabbar" aria-label="Main navigation"></nav>
+  </div>
+  <div id="overlay" hidden></div>
+  <div id="modals"></div>
+</div>
+<script>
+"use strict";
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const el=h=>{const t=document.createElement("template");t.innerHTML=h.trim();return t.content.firstElementChild;};
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const pad=n=>String(n).padStart(2,"0");
+const DAY=86400000;
+const REDUCED=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ================= icons (all inline SVG) ================= */
+const I={
+  logo:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 4 13h5v8l8-10h-5l0-8z" style="fill:var(--violet)"/><path d="M12 3 4 13h5v2.5L16.4 6 12 11l0-8z" style="fill:var(--violet-lite)" opacity=".7"/></svg>',
+  flame:'<svg viewBox="0 0 24 24" aria-hidden="true"><path style="fill:currentColor" d="M12 2s5.5 4.6 5.5 9.7a5.5 5.5 0 0 1-11 0c0-2.3 1.1-4.2 2.4-5.9.2 1.8 1 2.8 2 3.1C10.5 6.8 11.4 4.3 12 2z"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="9.5" rx="3"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.2" r="1.4" style="fill:currentColor" stroke="none"/></svg>',
+  unlock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="9.5" rx="3"/><path d="M8 10.5V7.5a4 4 0 0 1 7.8-1.2"/><circle cx="12" cy="15.2" r="1.4" style="fill:currentColor" stroke="none"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.8l5 5L19.5 6.5"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  chevR:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+  chevL:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  chevD:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 11 12 3.5 20.5 11v8.5a1.5 1.5 0 0 1-1.5 1.5h-4.5v-6h-5v6H5a1.5 1.5 0 0 1-1.5-1.5z"/></svg>',
+  target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" style="fill:currentColor"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 20v-6M12 20V4M19 20v-10"/></svg>',
+  people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.8-3.1 3.2-4.8 6-4.8s5.2 1.7 6 4.8"/><circle cx="16.8" cy="9.3" r="2.6"/><path d="M17.5 14.9c2 .4 3.4 1.7 4 3.9"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 4.5h6a3 3 0 0 1 3 3 3 3 0 0 1 3-3h6V18h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3H3z"/><path d="M12 7.5V21"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>',
+  chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10l-4.6 3.8V16H6a2 2 0 0 1-2-2z"/></svg>',
+  pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l.9-3.9L16.3 4.7a2 2 0 0 1 2.9 0l.1.1a2 2 0 0 1 0 2.9L7.9 19.1z"/></svg>',
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5 19 12h-4.2v7.5H9.2V12H5z"/></svg>',
+  upFill:'<svg viewBox="0 0 24 24" aria-hidden="true"><path style="fill:currentColor" d="M12 4.5 19 12h-4.2v7.5H9.2V12H5z"/></svg>',
+  trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v4.5a4 4 0 0 1-8 0z"/><path d="M8 5H4.5a3.3 3.3 0 0 0 3.6 3.6M16 5h3.5a3.3 3.3 0 0 1-3.6 3.6"/><path d="M12 12.5v3M8.5 20h7M10 15.5h4l.6 4.5H9.4z"/></svg>',
+  star:'<svg viewBox="0 0 24 24" aria-hidden="true"><path style="fill:currentColor" d="M12 2.8l2.7 5.7 6.1.8-4.5 4.2 1.2 6-5.5-3-5.5 3 1.2-6L3.2 9.3l6.1-.8z"/></svg>',
+  globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c-4.7 4.8-4.7 12.2 0 17 4.7-4.8 4.7-12.2 0-17z"/></svg>',
+  timer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M9.5 2.5h5"/></svg>',
+  sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></svg>',
+  bolt:'<svg viewBox="0 0 24 24" aria-hidden="true"><path style="fill:currentColor" d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5z"/></svg>',
+  brain:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5A3.5 3.5 0 0 0 5.5 6 3.2 3.2 0 0 0 4 11.5 3.4 3.4 0 0 0 6 17c.4 1.8 2 3 3.9 2.4 1-.3 2.1-1.4 2.1-2.9z"/><path d="M12 4.5A3.5 3.5 0 0 1 18.5 6a3.2 3.2 0 0 1 1.5 5.5A3.4 3.4 0 0 1 18 17c-.4 1.8-2 3-3.9 2.4-1-.3-2.1-1.4-2.1-2.9z"/></svg>',
+  shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 5.8v5.4c0 4.4 2.9 7.6 7 9.3 4.1-1.7 7-4.9 7-9.3V5.8z"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M10.5 18.5h3" stroke-linecap="round"/></svg>',
+  dumbbell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 8v8M4.5 10v4M17 8v8M19.5 10v4M7 12h10"/></svg>',
+  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.5A8 8 0 0 1 9.5 4.5 8 8 0 1 0 19.5 14.5z"/></svg>',
+};
+
+/* ================= storage (localStorage + memory fallback) ================= */
+const storage={ok:true,mem:{},
+  get(k){try{return localStorage.getItem(k);}catch(e){this.ok=false;return this.mem[k]??null;}},
+  set(k,v){try{localStorage.setItem(k,v);}catch(e){this.ok=false;this.mem[k]=v;}}
+};
+const DB="ascend60.v1";
+
+/* ================= constants ================= */
+const DAYS=60, FOCUS_TARGET=25, XP_TASK=10, XP_HABIT=8, XP_DAY_BONUS=25, XP_PER_RR=50;
+const COLORS={violet:"--violet",amber:"--amber",green:"--green",blue:"--blue",red:"--red"};
+const cvar=k=>`var(${COLORS[k]||"--violet"})`;
+const AREAS=[
+  {id:"focus",   name:"Deep Focus",     hint:"Long, undistracted work", icon:"target",   cat:"focus",      task:"Complete one focus session"},
+  {id:"screen",  name:"Screen Time",    hint:"Less mindless scrolling", icon:"phone",    cat:"focus",      task:"Stay under 2h of screen time"},
+  {id:"reading", name:"Reading",        hint:"Pages over feeds",        icon:"book",     cat:"wisdom",     task:"Read 10 pages"},
+  {id:"study",   name:"Learning",       hint:"Build a real skill",      icon:"brain",    cat:"wisdom",     task:"Study a skill for 20 minutes"},
+  {id:"body",    name:"Body",           hint:"Move every day",          icon:"dumbbell", cat:"confidence", task:"Train or walk 30 minutes"},
+  {id:"social",  name:"Social Courage", hint:"Talk to real people",     icon:"people",   cat:"confidence", task:"Start one real conversation"},
+];
+const CATS=["focus","wisdom","confidence"];
+const RANKS=[
+  {name:"Unreal",       rr:99, pct:"0.1%", tier:"unreal"},
+  {name:"Champion I",   rr:98, pct:"0.4%", tier:"champion"},
+  {name:"Champion II",  rr:97, pct:"0.9%", tier:"champion"},
+  {name:"Champion III", rr:96, pct:"1.7%", tier:"champion"},
+  {name:"Elite I",      rr:90, pct:"4%",   tier:"elite"},
+  {name:"Elite II",     rr:85, pct:"8%",   tier:"elite"},
+  {name:"Gold I",       rr:75, pct:"14%",  tier:"gold"},
+  {name:"Gold II",      rr:65, pct:"22%",  tier:"gold"},
+  {name:"Silver I",     rr:50, pct:"35%",  tier:"silver"},
+  {name:"Silver II",    rr:35, pct:"52%",  tier:"silver"},
+  {name:"Bronze",       rr:20, pct:"74%",  tier:"bronze"},
+  {name:"Unranked",     rr:0,  pct:"—",    tier:"unranked"},
+];
+const TIER_COLORS={
+  unreal:["--violet-lite","--violet"], champion:["--violet","--bg-bot"],
+  elite:["--violet-lite","--blue"],    gold:["--amber","--bronze"],
+  silver:["--silver","--faint"],       bronze:["--bronze","--bg-bot"],
+  unranked:["--faint","--card-hi"],
+};
+const AVA_GRADS=[["--violet","--blue"],["--violet-lite","--violet"],["--blue","--green"],["--amber","--red"],["--green","--violet"]];
+
+/* ================= dates ================= */
+const sod=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x;};
+const keyOf=d=>{const x=new Date(d);return x.getFullYear()+"-"+pad(x.getMonth()+1)+"-"+pad(x.getDate());};
+const parseKey=k=>{const[a,b,c]=k.split("-").map(Number);return new Date(a,b-1,c);};
+const todayKey=()=>keyOf(new Date());
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+function dayIdxOf(dk){ if(!S.user) return 1;
+  return Math.floor((sod(parseKey(dk))-sod(parseKey(S.user.startDate)))/DAY)+1; }
+const todayIdx=()=>clamp(dayIdxOf(todayKey()),1,DAYS);
+function rel(ts){const s=(Date.now()-ts)/1000;
+  if(s<60)return"just now"; if(s<3600)return Math.floor(s/60)+" min ago";
+  if(s<86400)return Math.floor(s/3600)+" hr ago"; return Math.floor(s/86400)+" d ago";}
+function fmtSched(t){ if(!t)return"everyday";
+  const[h,m]=t.split(":").map(Number); const ap=h>=12?"PM":"AM"; const hh=((h+11)%12)+1;
+  return hh+":"+pad(m)+" "+ap+" everyday"; }
+
+/* ================= state ================= */
+function defaultState(){return{
+  user:null,
+  lockIn:{active:false,startedAt:null,blockedItems:[],history:[]},
+  goals:[], habits:[], tasks:{}, focus:[], focusRun:null,
+  posts:seedPosts(), library:{progress:{}},
+  xp:0, bonusDays:{},
+};}
+let S=defaultState();
+function load(){ const raw=storage.get(DB);
+  if(raw){ try{ S=Object.assign(defaultState(),JSON.parse(raw)); }catch(e){ S=defaultState(); } } }
+function save(){ try{ storage.set(DB,JSON.stringify(S)); }catch(e){} }
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+/* ================= seed community posts (local only) ================= */
+function seedPosts(){const h=3600000,now=Date.now();return[
+ {id:"p1",author:"Jonas M.",rank:"Champion II",seed:0,ts:now-2*h,votes:284,votedByMe:false,
+  title:"Day 60/60 🔥",
+  body:"Two months ago I couldn't sit still for ten minutes. Today I closed out the full sixty days. The trick was never motivation — it was making the next rep so small I couldn't say no. Start with five minutes. Protect it like it's a meeting with your future self.",
+  comments:[{a:"Priya R.",t:now-1.5*h,b:"This is the post I needed today. Congrats!"},{a:"Leo T.",t:now-1*h,b:"Sixty days straight is unreal. What's next?"},{a:"Aino V.",t:now-.4*h,b:"Saving this for my day 1 tomorrow."}]},
+ {id:"p2",author:"Priya R.",rank:"Elite I",seed:2,ts:now-5*h,votes:191,votedByMe:false,
+  title:"Deleted every feed app on day 1. Here's what happened.",
+  body:"The first three days my thumb kept opening a hole where the app used to be. By day ten the silence stopped feeling like boredom and started feeling like room. I read four books this month. The apps are still gone.",
+  comments:[{a:"Sam K.",t:now-4*h,b:"The phantom thumb-tap is so real."},{a:"Jonas M.",t:now-3*h,b:"Room, not boredom. Well put."}]},
+ {id:"p3",author:"Leo T.",rank:"Gold I",seed:1,ts:now-9*h,votes:96,votedByMe:false,
+  title:"The 25-minute rule saved my mornings",
+  body:"One focus session before I'm allowed to touch my phone. That's the whole system. Some mornings it turns into three sessions. On the bad mornings, one is still one. The streak doesn't care how I felt about it.",
+  comments:[{a:"Nadia F.",t:now-8*h,b:"Adopting this tomorrow morning."}]},
+ {id:"p4",author:"Sam K.",rank:"Silver I",seed:3,ts:now-14*h,votes:77,votedByMe:false,
+  title:"Failed day 12. Restarting tomorrow.",
+  body:"Stayed up late, skipped everything, broke the streak. Posting this so I can't quietly pretend it didn't happen. The plan isn't ruined — the plan just includes today now. See you at day 1.",
+  comments:[{a:"Jonas M.",t:now-12*h,b:"Restarting is the skill. Most people just stop."},{a:"Chris B.",t:now-10*h,b:"Day 12 with a restart beats day 0 with an excuse."}]},
+ {id:"p5",author:"Nadia F.",rank:"Elite II",seed:4,ts:now-26*h,votes:65,votedByMe:false,
+  title:"Extreme mode is not a joke",
+  body:"Anything less than 100% and the streak dies. I lost a 9-day run because I skipped one habit at 11pm. Brutal, but I've never planned my evenings this carefully in my life. Only switch it on if you mean it.",
+  comments:[{a:"Leo T.",t:now-20*h,b:"11pm panic habit completion is a genre of its own."}]},
+ {id:"p6",author:"Chris B.",rank:"Gold II",seed:1,ts:now-40*h,votes:51,votedByMe:false,
+  title:"Reading 10 pages a day > doomscrolling",
+  body:"Ten pages takes me about twelve minutes. That's one feed session I don't miss. In sixty days that's two or three real books finished instead of a thousand posts I can't remember a single one of.",
+  comments:[{a:"Priya R.",t:now-30*h,b:"The math on this is what convinced me too."},{a:"Aino V.",t:now-28*h,b:"Twelve minutes. That's nothing. Starting tonight."}]},
+ {id:"p7",author:"Aino V.",rank:"Bronze",seed:2,ts:now-60*h,votes:34,votedByMe:false,
+  title:"Week 1 check-in: small wins count",
+  body:"Seven days in. Nothing dramatic — I just did the boring things every day. Two habits, one focus block, a walk. My score barely moved and I don't care. The person who shows up for week two is already different.",
+  comments:[{a:"Sam K.",t:now-50*h,b:"The boring things are the whole game."}]},
+];}
+
+/* ================= library books (original short guides, not real summaries) ================= */
+const BOOKS=[
+ {id:"reset",title:"The 60-Day Reset",author:"Aria Vale",grad:["--violet","--blue"],
+  desc:"Why sixty days is long enough to change your defaults and short enough to actually finish. The playbook this whole app is built around.",
+  pages:[
+   "Sixty days is a strange number. It is too long to fake and too short to postpone. A week you can white-knuckle. A year you can always start later. Sixty days sits in the uncomfortable middle: close enough to see the end, far enough that only a system will carry you there.\n\nThis book is about building that system in the first three days and then getting out of its way.",
+   "Start by choosing fewer things than feels ambitious. Two habits and one daily task beat seven of each, because the goal of week one is not progress — it is evidence. Evidence that you are the kind of person who does what they wrote down.\n\nEvery completed day is a vote for that identity. Sixty small votes is enough to swing the election.",
+   "Design the day the night before. Not a schedule — a floor. The floor is the minimum that still counts: one focus block, one walk, ten pages. On good days you will clear it by lunch. On terrible days the floor is what saves the streak.\n\nAmbition is for mornings. Floors are for real life.",
+   "Expect day eighteen. Around then the novelty is gone, the results are not visible yet, and skipping once would feel completely reasonable. This is not a crisis; it is a scheduled event. Write the day-eighteen plan now: shrink everything to five minutes, complete it anyway, go to bed.\n\nThe streak does not need a good day. It needs a day.",
+   "Track honestly, or the whole machine rusts. A day where you did one of three things is a partial day — mark it as one. Partial days are not failures; they are load-bearing. A chain of partials through a brutal week is more impressive than a perfect week in easy conditions.",
+   "When you break — and most people break once — restart the same evening. Not Monday. Not the first of the month. The gap between breaking and restarting is where sixty-day runs actually die. Keep the gap under twenty-four hours and the break becomes a plot point instead of an ending.",
+   "On day sixty, do not celebrate by dismantling the system. Keep the floor, keep the tracking, and raise exactly one thing. The reset was never the point. The person who can run a sixty-day system can run a life."
+  ]},
+ {id:"deep",title:"Deep Hours",author:"M. Okafor",grad:["--blue","--violet"],
+  desc:"A short field guide to sitting with one hard thing until it moves. Focus as a trainable skill, not a personality trait.",
+  pages:[
+   "Focus is not a talent you either have or lack. It is a tolerance — the ability to stay with one hard thing while every cell suggests something easier. Tolerances are trained the same way everywhere: controlled exposure, gradually increased.\n\nStart with a block short enough that failing it would be embarrassing.",
+   "The first five minutes of any session are the worst, because your brain is still auctioning off your attention to whatever bid last. Do not judge the session by them. Set the timer, start badly, and let the work itself pull you under. Momentum is a consequence, not a prerequisite.",
+   "One block, one target. 'Work on the project' is not a target; it is a fog. 'Draft the first section' is a target. When the timer starts you should already know what done looks like for the next twenty-five minutes. Deciding is the expensive part — never spend focus on it.",
+   "Interruptions are not equal. External ones — a phone in another room solves most — and internal ones: the sudden urge to check, look up, reorganize. For internal ones keep a scrap of paper. Write the urge down, return to the work. The list at the end is a museum of things that could wait.",
+   "Stop while it still moves. Ending a session mid-momentum feels wrong and works wonderfully: the open loop makes the next session easy to start. End at the wall instead and tomorrow you will remember focus as suffering.\n\nProtect the hours. Nothing you scroll will remember you back."
+  ]},
+ {id:"feed",title:"The Quiet Feed",author:"S. Lindholm",grad:["--amber","--red"],
+  desc:"What actually happens in the two weeks after you mute the noise — and how to survive the boredom that shows up first.",
+  pages:[
+   "The feed is not evil. It is simply better at its job than you are at yours. Its job is your next glance; yours is your next decade. Any honest comparison of incentives says: do not fight it on its terms. Change the terms.",
+   "Day one of quiet is loud. The hand moves on its own, the pocket buzzes with phantom notifications, and boredom arrives within the hour. This is withdrawal, and it is wonderfully ordinary. Nobody has ever been harmed by reaching for a phone that holds nothing interesting.",
+   "Boredom is the raw material. Under it, usually within three days, you will find the thing you were scrolling to avoid: an email, a decision, a feeling. Handling one avoided thing per day is a better use of the reclaimed minutes than any productivity system.",
+   "Replace, don't just remove. The glance-shaped hole in your day needs a glance-shaped answer: a book that lives where the phone lived, a note app that opens to today's plan, a window. The habit of checking survives; you only get to choose what it lands on.",
+   "After two weeks the silence stops feeling like discipline and starts feeling like ownership. You will still visit the feeds — but as a tourist, not a resident. Tourists leave when they are done. Residents forget there is a door."
+  ]},
+ {id:"reps",title:"Small Reps",author:"D. Carter",grad:["--green","--blue"],
+  desc:"Habit mechanics without the mysticism: floors, triggers, and why the second week matters more than the first.",
+  pages:[
+   "A habit is a bet that your future self will keep showing up. Most people size the bet by enthusiasm, which is why most habits die by Thursday. Size it by your worst day instead. If the rep survives your worst day, it will thrive on the good ones.",
+   "Attach every rep to something that already happens. After coffee, ten pushups. After lunch, ten pages. The calendar is unreliable; your existing routine is not. A habit with a trigger inherits the trigger's reliability.",
+   "Count the rep the moment it happens. The tap on the check button is not bookkeeping — it is the reward. A visible chain of completed days does more for adherence than any amount of self-talk, because it converts identity into something you can look at.",
+   "Week two is the real test. Week one runs on novelty. Week two runs on nothing — results are invisible and the rep is now boring. Boring is the signal that it is working: excitement was never going to be the engine. Show up bored. Bored reps count exactly the same.",
+   "Miss once, never twice. One missed day is weather; two is a climate. The rule is not about punishment — it is about keeping the restart cheap. The smaller the gap, the smaller the story you have to tell yourself about it.",
+   "Eventually the chain itself becomes the habit. You will do the rep on days you cannot remember deciding to. That is the whole trick: decisions are expensive, defaults are free. Spend sixty days buying better defaults."
+  ]},
+ {id:"morning",title:"Morning Architecture",author:"L. Meyer",grad:["--amber","--violet"],
+  desc:"The first ninety minutes decide the day's slope. Build them once, stop negotiating with them daily.",
+  pages:[
+   "You do not rise to the level of your goals in the morning; you fall to the level of whatever is within arm's reach. If the phone is within reach, the feed is your architect. Move it, and you have already redesigned the first hour.",
+   "A morning needs one anchor, not a routine with twelve steps. One block of real work, or one training session, before the world gets a vote. Everything else — the perfect coffee, the journaling spread — is decoration. Decoration is fine. Anchors are mandatory.",
+   "Decide the anchor the night before, in writing. The morning brain is a brilliant executor and a terrible planner. Give it a note that says 'draft the intro' and it will draft the intro. Give it nothing and it will check the weather in three cities.",
+   "Guard the slope, not the schedule. Waking at six and scrolling until seven is a worse morning than waking at eight and working at eight-fifteen. The clock time matters far less than the angle: is the day already moving up before the first interruption lands?",
+   "When a morning collapses — they will — do not write off the day. The morning is the best lever, not the only one. Salvage with one focus block at noon and the day still counts. Architecture is what you rebuild, not what never falls."
+  ]},
+ {id:"ledger",title:"The Focus Ledger",author:"R. Tanaka",grad:["--green","--violet"],
+  desc:"Attention is a budget you are already spending. Start writing it down and the leaks reveal themselves.",
+  pages:[
+   "You keep a ledger for money and none for attention, yet attention is the scarcer currency. You can earn money back. The Tuesday you spent on nothing is not coming back at any interest rate.",
+   "For three days, just observe. Every block of twenty minutes, one word for where it went. No judgment, no fixing. The data will embarrass you; let it. An honest ledger is worth more than an impressive one, because only the honest one shows where the leaks are.",
+   "Most leaks are transitions. Not the meeting — the twenty minutes after it. Not the message — the tunnel it opens. Guard the seams of the day: end one thing by naming the next. A day with clean seams feels twice as long.",
+   "Budget attention like a salary: pay yourself first. The best ninety minutes go to the hardest thing, before email and errands make their claims. What is left over funds the shallow work — never the reverse. Leftovers are fine for chores. They are fatal for the real thing.",
+   "Review weekly, in one minute: where did the hours go, where should next week's go, what one leak gets plugged. Do not build a dashboard. The ledger's power is that reading it takes less time than lying to yourself does."
+  ]},
+ {id:"unfollow",title:"Unfollow",author:"K. Adeyemi",grad:["--violet","--red"],
+  desc:"On comparison, timelines, and quitting the audience you never auditioned for.",
+  pages:[
+   "Comparison used to be local: the neighbor, the classmate, the cousin. Now it is global and curated — you measure your Tuesday against a stranger's highlight reel, seven time zones away, shot on the best day of their year. The contest is rigged. Stop entering.",
+   "Every follow is a vote for what your mind rehearses. An envy account is not entertainment; it is a training program you did not sign up for. Audit the list once: keep what teaches or genuinely delights, cut what only measures you. It takes an evening. It pays for years.",
+   "The urge to perform your progress is subtler. Posting the streak turns the streak into content, and content needs an audience, and audiences get bored. Do the work for the ledger, not the timeline. The people who matter will notice without being notified.",
+   "Compare against your own baseline, on purpose, weekly. Last week's focus minutes, last month's pages. This is the one comparison with clean data and a fair opponent. It is also the only one that produces instructions instead of moods.",
+   "Unfollowing is not retreat. It is choosing your inputs the way you choose your food — deliberately, because you become them. Quiet inputs, loud output. That trade is available every single day."
+  ]},
+ {id:"night",title:"Night Shift Off",author:"P. Sørensen",grad:["--blue","--green"],
+  desc:"The evening routine is the morning routine. Ending the day on purpose instead of by collapse.",
+  pages:[
+   "Every bad morning was engineered the night before, by a version of you who felt entitled to one more episode, one more scroll. The evening is where tomorrow is actually decided. Treat it like the control room it is.",
+   "Give the day a landing, not a crash. A closing ritual of five minutes: write tomorrow's floor, close the tabs, put the phone on its charger — in another room. The ritual matters less than the fact that it is the same every night. Sameness is what tells the brain: we are done.",
+   "The hour before sleep is the day's most defenseless hour. Willpower is spent, and the feed knows it. Do not fight it with discipline; fight it with distance. A phone across the room at 10pm outperforms any amount of resolve at 11.",
+   "Guard the last input. Whatever enters the mind in the final thirty minutes gets the whole night to echo. A chapter of something slow beats forty clips of everything fast. You are not missing out — you are choosing what the night rehearses.",
+   "Sleep is not the reward for finishing the day; it is the first task of tomorrow. Eight hours banked is a different person at 7am — more patient, harder to distract, easier to lock in. Protect the night and the streak protects itself."
+  ]},
+];
+
+/* ================= computation rules ================= */
+function taskTemplates(){ if(!S.user) return [];
+  return S.user.areas.map(id=>AREAS.find(a=>a.id===id)).filter(Boolean); }
+function ensureTasks(di){ if(di<1||di>DAYS||!S.user) return;
+  if(!S.tasks[di]){ S.tasks[di]=taskTemplates().map(a=>({id:uid(),title:a.task,category:a.cat,done:false})); } }
+function ensureAllTasks(){ const t=todayIdx(); for(let i=1;i<=t;i++) ensureTasks(i); }
+
+function lockCovers(dk){ const d0=sod(parseKey(dk)).getTime(), d1=d0+DAY;
+  const iv=[...(S.lockIn.history||[])];
+  if(S.lockIn.active&&S.lockIn.startedAt) iv.push({start:S.lockIn.startedAt,end:Date.now()});
+  return iv.some(v=>v.start<d1&&v.end>d0); }
+
+function dayStats(dk){
+  const di=dayIdxOf(dk);
+  const t=(di>=1&&di<=DAYS?S.tasks[di]:null)||[];
+  const tTot=t.length, tDone=t.filter(x=>x.done).length;
+  let hTot=0,hDone=0;
+  for(const h of S.habits){ const n=(h.log&&h.log[dk])||0; hTot+=h.target; hDone+=Math.min(n,h.target); }
+  const fmin=S.focus.filter(f=>f.date===dk).reduce((a,f)=>a+f.minutes,0);
+  const locked=lockCovers(dk);
+  let acc=0,w=0;
+  if(tTot){acc+=.40*(tDone/tTot);w+=.40;}
+  if(hTot){acc+=.25*(hDone/hTot);w+=.25;}
+  acc+=.20*Math.min(1,fmin/FOCUS_TARGET);w+=.20;
+  acc+=.15*(locked?1:0);w+=.15;
+  return {tTot,tDone,hTot,hDone,fmin,locked,pct:w?acc/w:0,
+    activity:tDone>0||hDone>0||fmin>0};
+}
+function dayDone(dk){ const s=dayStats(dk);
+  return S.user&&S.user.extreme ? s.pct>=.999 : s.activity; }
+
+function computeRR(){ if(!S.user) return 0;
+  const today=sod(new Date()); let sum=0,n=0;
+  for(let i=0;i<7;i++){ const d=addDays(today,-i);
+    if(sod(d)<sod(parseKey(S.user.startDate))) break;
+    sum+=dayStats(keyOf(d)).pct; n++; }
+  return n?Math.round(99*sum/n):0; }
+function rankFor(rr){ return RANKS.find(r=>rr>=r.rr)||RANKS[RANKS.length-1]; }
+
+function streak(){ if(!S.user) return 0;
+  const start=sod(parseKey(S.user.startDate)); let d=sod(new Date()),n=0;
+  if(!dayDone(keyOf(d))) d=addDays(d,-1);            // today can still be earned
+  while(d>=start&&dayDone(keyOf(d))){n++;d=addDays(d,-1);}
+  return n; }
+function habitStreak(h){ let d=sod(new Date()),n=0;
+  const done=dk=>((h.log&&h.log[dk])||0)>=h.target;
+  if(!done(keyOf(d))) d=addDays(d,-1);
+  while(done(keyOf(d))){n++;d=addDays(d,-1);}
+  return n; }
+
+function addXp(n){ S.xp=Math.max(0,S.xp+n); }
+function checkDayBonus(){ const dk=todayKey(), full=dayStats(dk).pct>=.999;
+  if(full&&!S.bonusDays[dk]){S.bonusDays[dk]=true;addXp(XP_DAY_BONUS);}
+  else if(!full&&S.bonusDays[dk]){delete S.bonusDays[dk];addXp(-XP_DAY_BONUS);} }
+
+function attributes(){
+  const c={focus:{d:0,t:0},wisdom:{d:0,t:0},confidence:{d:0,t:0}};
+  const t0=Math.max(1,todayIdx()-13);
+  for(let i=t0;i<=todayIdx();i++) for(const t of (S.tasks[i]||[])){
+    if(!c[t.category]) continue; c[t.category].t++; if(t.done)c[t.category].d++; }
+  const sc=k=>c[k].t?Math.round(99*c[k].d/c[k].t):0;
+  const f=sc("focus"),w=sc("wisdom"),co=sc("confidence");
+  return {overall:Math.round((f+w+co)/3),focus:f,wisdom:w,confidence:co}; }
+
+function focusScore(){ const today=sod(new Date()); let min=0,done=0,tot=0;
+  for(const f of S.focus){ const d=sod(parseKey(f.date));
+    if((today-d)/DAY<7){min+=f.minutes;tot++;if(f.completed)done++;} }
+  if(!tot&&!min) return 0;
+  return Math.round(Math.min(100,70*Math.min(1,min/(FOCUS_TARGET*7))+30*(tot?done/tot:0))); }
+function focusStatus(s){ if(s===0)return"No sessions yet — start your first one.";
+  if(s<40)return"Just getting started"; if(s<70)return"Making good progress";
+  if(s<90)return"Strong focus this week"; return"Elite focus"; }
+
+/* ================= badge art (own design, layered polygons) ================= */
+let _bid=0;
+function badgeSVG(tier){ const [a,b]=TIER_COLORS[tier]||TIER_COLORS.unranked; const g="bg"+(++_bid);
+  return `<svg viewBox="0 0 100 100" aria-hidden="true">
+    <defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" style="stop-color:var(${a})"/><stop offset="1" style="stop-color:var(${b})"/>
+    </linearGradient></defs>
+    <polygon points="50,3 90,26 90,74 50,97 10,74 10,26" fill="url(#${g})" opacity=".92"/>
+    <polygon points="50,11 83,30 83,70 50,89 17,70 17,30" style="fill:var(--bg-top)" opacity=".55"/>
+    <polygon points="50,20 76,50 50,80 24,50" fill="url(#${g})"/>
+    <polygon points="50,30 67,50 50,70 33,50" style="fill:var(--text)" opacity=".85"/>
+    <polygon points="50,3 90,26 50,49 10,26" style="fill:var(--text)" opacity=".08"/>
+  </svg>`; }
+function avatarStyle(seed){ const [a,b]=AVA_GRADS[(seed||0)%AVA_GRADS.length];
+  return `background:linear-gradient(135deg,var(${a}),var(${b}));`; }
+
+/* ================= animated number counter ================= */
+function animNum(elm,to,fmt){ fmt=fmt||(v=>v);
+  if(!elm) return;
+  if(REDUCED()){elm.textContent=fmt(to);return;}
+  const from=Number(elm.dataset.n||0); elm.dataset.n=to;
+  if(from===to){elm.textContent=fmt(to);return;}
+  const t0=performance.now();
+  const step=t=>{const p=Math.min(1,(t-t0)/400);
+    const v=Math.round(from+(to-from)*(1-Math.pow(1-p,3)));
+    elm.textContent=fmt(v); if(p<1)requestAnimationFrame(step);};
+  requestAnimationFrame(step); }
+
+/* ================= shell: header / tabs / router ================= */
+const TABS=[["home","Home","home"],["focus","Focus","timer"],["progress","Progress","chart"],["community","Community","people"],["library","Library","book"]];
+const SUBPARENT={insights:"progress",ladder:"progress",reader:"library"};
+const ui={view:"home",commFilter:"Top",commSearch:"",libTab:"discover",readerBook:null,heatMore:false,focusDur:25};
+
+function renderHeader(){
+  $("#logobox").innerHTML=I.logo+"<span>ASCEND</span>";
+  $("#streakpill").innerHTML=I.flame+`<span>${streak()}</span>`;
+  const av=$("#avatarbox");
+  av.style.cssText=avatarStyle(S.user?S.user.avatarSeed:0);
+  av.textContent=(S.user&&S.user.name?S.user.name:"?").trim().charAt(0).toUpperCase()||"?";
+}
+function renderTabs(){
+  $("#tabbar").innerHTML=TABS.map(([id,label,ic])=>{
+    const active=(ui.view===id)||(SUBPARENT[ui.view]===id);
+    return `<button class="tab ${active?"active":""}" data-act="nav" data-arg="${id}" aria-label="${label}">${I[ic]}<span>${label}</span></button>`;
+  }).join("");
+}
+const RENDER={};
+function show(view){
+  ui.view=view;
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
+  const sec=$("#view-"+view);
+  RENDER[view]&&RENDER[view]();
+  sec.classList.add("on");
+  renderTabs();
+  window.scrollTo({top:0,behavior:"instant"});
+}
+function rerender(){ renderHeader(); RENDER[ui.view]&&RENDER[ui.view](); }
+
+/* ================= HOME ================= */
+RENDER.home=function(){
+  const dk=todayKey();
+  /* week row (Mon-start) */
+  const now=sod(new Date());
+  const mon=addDays(now,-((now.getDay()+6)%7));
+  const letters=["M","T","W","T","F","S","S"];
+  const start=sod(parseKey(S.user.startDate));
+  let week="";
+  for(let i=0;i<7;i++){ const d=addDays(mon,i), k=keyOf(d);
+    const isToday=k===dk, fut=d>now, pre=d<start;
+    const done=!fut&&!pre&&dayDone(k);
+    let cls="wkc",inner="–";
+    if(done){cls+=" done";inner=I.check;}
+    else if(fut||pre){cls+=" fut";inner="–";}
+    if(isToday)cls+=" today";
+    week+=`<div class="wcol"><span class="wkday">${letters[i]}</span><div class="${cls}">${inner}</div></div>`;
+  }
+  /* lock-in circle */
+  const L=S.lockIn;
+  let lock;
+  if(L.active){
+    lock=`<div class="lockcirc on press" role="button" tabindex="0" data-act="lockToggle" aria-label="End lock in">${I.lock}</div>
+      <div class="locklabel">Locked in for</div>
+      <div class="lockbig" id="lockbig"></div>
+      <div class="lockpill" id="lockpill"></div>`;
+  }else{
+    lock=`<div class="lockcirc off press" role="button" tabindex="0" data-act="lockToggle" aria-label="Start lock in">${I.unlock}</div>
+      <div class="lockoff-label">Not locked in</div>
+      <button class="btn btn-primary lockstart press" data-act="lockToggle">Start lock in</button>`;
+  }
+  /* blocked items */
+  const items=L.blockedItems;
+  const bchips=items.length
+    ? `<div class="bchips">${items.map(b=>`<span class="bchip">${I.globe}${esc(b.name)}</span>`).join("")}</div>`
+    : `<div class="empty" style="margin:10px 0 0">Nothing on your avoid list yet.<br>Tap to add the apps and sites you're staying away from.</div>`;
+  /* goals */
+  const goals=S.goals.length?S.goals.map(g=>{
+    const left=Math.ceil((sod(parseKey(g.deadline))-sod(new Date()))/DAY);
+    const full=g.progress>=100;
+    return `<div class="card goal press" data-act="goalOpen" data-arg="${g.id}">
+      <div class="gtop"><div><div class="gtitle">${esc(g.title)}</div>
+        <div class="gdays">${left>0?left+" days left":(left===0?"Due today":"Past due")}</div></div>
+        <span class="gpct ${full?"full":""}">${g.progress}%</span></div>
+      <div class="gtrack"><div class="gbar ${full?"full":""}" style="width:${clamp(g.progress,0,100)}%"></div></div>
+    </div>`;}).join("")
+    : `<div class="empty">No goals yet. Add one to give these 60 days a direction.</div>`;
+  /* habits */
+  const habits=S.habits.length?S.habits.map(h=>{
+    const n=(h.log&&h.log[dk])||0, on=n>=h.target, c=cvar(h.color);
+    return `<div class="card habit" data-act="habitOpen" data-arg="${h.id}">
+      <div class="hicon" style="background:color-mix(in srgb, ${c} 20%, transparent);color:${c}">${I[h.icon||"bolt"]}</div>
+      <div class="hmain"><div class="hname">${esc(h.name)}</div>
+        <div class="hsub">${esc(fmtSched(h.time))}</div>
+        <div class="htrack"><div class="hbar" style="width:${Math.min(100,100*n/h.target)}%;background:${c};box-shadow:0 0 8px color-mix(in srgb, ${c} 45%, transparent)"></div></div></div>
+      <div class="hright"><span class="hcount">${n}/${h.target}</span>
+        <button class="ck ${on?"on":""}" style="border-color:${c};${on?`background:${c};`:""}" data-act="habitCheck" data-arg="${h.id}" aria-label="Check ${esc(h.name)}">${I.check}</button></div>
+    </div>`;}).join("")
+    : `<div class="empty">No habits yet. Start with one small daily rep.</div>`;
+  /* today's plan (tasks) */
+  const di=todayIdx(); ensureTasks(di);
+  const tasks=S.tasks[di]||[];
+  const tlist=tasks.length?tasks.map(t=>`
+    <div class="card task">
+      <button class="ck ${t.done?"on":""}" style="border-color:var(--violet);${t.done?"background:var(--violet);":""}" data-act="taskToggle" data-arg="${t.id}" aria-label="Toggle ${esc(t.title)}">${I.check}</button>
+      <div style="flex:1;min-width:0"><div class="ttitle ${t.done?"done":""}">${esc(t.title)}</div>
+      <div class="tcat">${t.category}</div></div>
+    </div>`).join("")
+    : `<div class="empty">No tasks for today.</div>`;
+  $("#view-home").innerHTML=`
+    <div class="weekrow">${week}</div>
+    <div class="lockwrap">${lock}</div>
+    <div class="card press" data-act="blockedEdit" style="cursor:pointer">
+      <div class="blockedhead"><span class="bdot"></span>Blocked Items</div>
+      ${bchips}
+      <div class="bnote">A list you keep — the browser can't enforce blocking for you.</div>
+    </div>
+    <div class="secrow"><span class="lab">Goals</span><button class="addbtn press" data-act="goalAdd" aria-label="Add goal">${I.plus}</button></div>
+    ${goals}
+    <div class="secrow"><span class="lab">Habits</span><button class="addbtn press" data-act="habitAdd" aria-label="Add habit">${I.plus}</button></div>
+    ${habits}
+    <div class="secrow"><span class="lab">Today's Plan</span><span class="hcount">${tasks.filter(t=>t.done).length}/${tasks.length}</span></div>
+    ${tlist}`;
+  tickLock();
+};
+function tickLock(){
+  if(!S.lockIn.active) return;
+  const e=Date.now()-S.lockIn.startedAt;
+  const d=Math.floor(e/DAY), h=Math.floor(e%DAY/3600000), m=Math.floor(e%3600000/60000), s=Math.floor(e%60000/1000);
+  const big=$("#lockbig"), pill=$("#lockpill");
+  if(!big) return;
+  if(d>=1){ big.innerHTML=`${d}<small>${d===1?"day":"days"}</small>`; pill.textContent=`${h}h ${m}m ${s}s`; }
+  else if(h>=1){ big.innerHTML=`${h}<small>${h===1?"hour":"hours"}</small>`; pill.textContent=`${m}m ${s}s`; }
+  else { big.innerHTML=`${m}<small>min</small>`; pill.textContent=`${s}s`; }
+}
+
+/* ================= FOCUS ================= */
+RENDER.focus=function(){
+  const score=focusScore();
+  const C=2*Math.PI*37;
+  const sessions=S.focus.filter(f=>f.completed).length;
+  $("#view-focus").innerHTML=`
+    <h1 class="vtitle">Focus</h1>
+    <div class="card fscard">
+      <div class="ringwrap"><svg viewBox="0 0 80 80">
+        <circle class="ringc" cx="40" cy="40" r="37"/>
+        <circle class="ringv" cx="40" cy="40" r="37" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-score/100)}"/>
+      </svg><div class="ringtxt"><span class="ringnum" id="fscore"></span><span class="ringlab">Score</span></div></div>
+      <div><div class="fstitle">Focus Score</div><div class="fsstatus">${focusStatus(score)}</div></div>
+    </div>
+    <div class="card sesscard"><div class="lab">Sessions</div><div class="sessnum" id="sessnum"></div></div>
+    <button class="btn btn-primary btn-block bigbtn press" data-act="focusStart">Focus Session</button>
+    <button class="pillbtn press" data-act="focusViewAll">View All ${I.chevR.replace('width="2.2"','width="2.6"')}</button>
+    <div class="chips" style="justify-content:center">
+      ${[15,25,45,60].map(m=>`<button class="chip press ${ui.focusDur===m?"sel":""}" data-act="focusDur" data-arg="${m}">${m}m</button>`).join("")}
+    </div>
+    ${S.user.extreme?`<p style="text-align:center;font-size:11px;color:var(--faint);margin-top:16px">Extreme mode: leaving the app during a session abandons it.</p>`:""}`;
+  animNum($("#fscore"),score);
+  animNum($("#sessnum"),sessions);
+};
+
+/* focus session engine */
+function startFocus(){
+  const dur=ui.focusDur;
+  S.focusRun={end:Date.now()+dur*60000,dur,started:Date.now(),date:todayKey()};
+  save(); showOverlay();
+}
+function showOverlay(){
+  const o=$("#overlay"); o.hidden=false;
+  o.innerHTML=`
+    <div class="ovlabel">Focus Session</div>
+    <div class="ovring"><div class="ovclock" id="ovclock">--:--</div>
+      <div class="ovsub">${S.focusRun.dur} min</div></div>
+    <div class="ovsub">${S.user.extreme?"Extreme mode — leaving this screen fails the session.":"Stay with one thing until the timer ends."}</div>
+    <button class="btn btn-danger press" style="margin-top:26px" data-act="focusCancel">Give up</button>`;
+  tickOverlay();
+}
+function tickOverlay(){
+  const r=S.focusRun; if(!r) return;
+  const left=r.end-Date.now();
+  if(left<=0){ finishFocus(true); return; }
+  const c=$("#ovclock"); if(!c) return;
+  const m=Math.floor(left/60000), s=Math.floor(left%60000/1000);
+  c.textContent=pad(m)+":"+pad(s);
+}
+function finishFocus(completed){
+  const r=S.focusRun; if(!r) return;
+  const mins=completed?r.dur:clamp(Math.floor((Date.now()-r.started)/60000),0,r.dur);
+  S.focus.push({date:r.date,minutes:mins,completed});
+  if(mins>0) addXp(mins);
+  S.focusRun=null; checkDayBonus(); save();
+  const o=$("#overlay");
+  o.innerHTML=completed
+    ? `<div class="ovdone">✓</div><div class="ovlabel" style="margin-top:10px">Session complete</div>
+       <div class="ovsub" style="margin-top:6px">+${mins} XP</div>`
+    : `<div class="ovdone" style="color:var(--red)">✕</div><div class="ovlabel" style="margin-top:10px">Session ${mins>0?"abandoned":"failed"}</div>
+       <div class="ovsub" style="margin-top:6px">${mins>0?mins+" min logged, no completion":"No time logged"}</div>`;
+  setTimeout(()=>{o.hidden=true;o.innerHTML="";rerender();},1400);
+}
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden&&S.focusRun&&S.user&&S.user.extreme) finishFocus(false);
+});
+
+/* ================= PROGRESS ================= */
+function heatmapHTML(color,valueFn,weeks){
+  const now=sod(new Date());
+  const sun=addDays(now,-now.getDay());           // this week's Sunday
+  const first=addDays(sun,-(weeks-1)*7);
+  const start=sod(parseKey(S.user.startDate));
+  let cells="";
+  for(let w=0;w<weeks;w++) for(let d=0;d<7;d++){
+    const day=addDays(first,w*7+d);
+    if(day>now){cells+=`<div class="hcell fut"></div>`;continue;}
+    if(day<start){cells+=`<div class="hcell"></div>`;continue;}
+    const r=valueFn(keyOf(day));
+    let st="";
+    if(r>0){ const op=r<=.25?20:r<=.5?45:r<=.75?70:100;
+      st=`style="background:color-mix(in srgb, ${color} ${op}%, transparent)"`; }
+    cells+=`<div class="hcell" ${st}></div>`;
+  }
+  const days=["S","M","T","W","T","F","S"].map(l=>`<span>${l}</span>`).join("");
+  return `<div class="heatbody"><div class="heatdays">${days}</div>
+    <div class="heatgrid" style="grid-template-columns:repeat(${weeks},1fr)">${cells}</div></div>`;
+}
+RENDER.progress=function(){
+  const di=todayIdx(), dk=todayKey();
+  /* 60-day grid */
+  const start=sod(parseKey(S.user.startDate)), now=sod(new Date());
+  let g60="";
+  for(let i=1;i<=DAYS;i++){ const d=addDays(start,i-1), k=keyOf(d);
+    let cls="g60";
+    if(d>now) cls+=" fut";
+    else { const p=dayStats(k).pct;
+      if(p>=.999) cls+=" full"; else if(p>0) cls+=" part";
+      else if(k===dk) cls+=" todayempty"; }
+    g60+=`<div class="${cls}"></div>`;
+  }
+  /* task activity */
+  const weeks=ui.heatMore?24:12;
+  const tstats=dayStats(dk);
+  const taskHeat=heatmapHTML("var(--violet)",k=>{const s=dayStats(k);return s.tTot?s.tDone/s.tTot:0;},weeks);
+  const habitHeats=S.habits.map(h=>{
+    const c=cvar(h.color), n=(h.log&&h.log[dk])||0;
+    return `<div class="card">
+      <div class="heathead"><h3>${esc(h.name)}</h3>
+        <div class="heatstats"><span class="minipill">${I.flame}${habitStreak(h)}</span>
+        <span class="hs1">${n}/${h.target}</span><span class="hs2">${Math.round(100*Math.min(1,n/h.target))}%</span></div></div>
+      ${heatmapHTML(c,k=>Math.min(1,((h.log&&h.log[k])||0)/h.target),weeks)}
+    </div>`;}).join("");
+  const rr=computeRR(), rank=rankFor(rr);
+  const C=2*Math.PI*87.5;
+  $("#view-progress").innerHTML=`
+    <div class="prow"><div class="pday">Day ${di}<span>|${DAYS}</span></div>
+      <div class="pclock" id="midnight">--:--:--</div></div>
+    <div class="psub"><span>of your reset</span><span>left today</span></div>
+    <div class="badgewrap">
+      <div class="badgering">
+        <svg class="arc" viewBox="0 0 180 180">
+          <circle class="arcbg" cx="90" cy="90" r="87.5"/>
+          <circle class="arcfg" cx="90" cy="90" r="87.5" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-di/DAYS)}"/>
+        </svg>
+        <div class="badgeart">${badgeSVG(rank.tier)}</div>
+      </div>
+      <div class="badgename">${rank.name}</div>
+      <div class="rrpill">${I.star}<span id="rrp"></span>&nbsp;RR</div>
+    </div>
+    <button class="linkcard press" data-act="insightsOpen">${I.chart}Overall Insights<span class="spacer"></span><span class="chev">${I.chevR}</span></button>
+    <div class="card">
+      <div class="cardhead"><h3>60-Day Progress</h3><span class="r">${di}/${DAYS} days</span></div>
+      <div class="grid60">${g60}</div>
+    </div>
+    <div class="card">
+      <div class="heathead"><h3>Task Activity</h3>
+        <div class="heatstats"><span class="minipill">${I.flame}${streak()}</span>
+          <span class="hs1">${tstats.tDone}/${tstats.tTot}</span>
+          <span class="hs2">${tstats.tTot?Math.round(100*tstats.tDone/tstats.tTot):0}%</span></div></div>
+      ${taskHeat}
+      <button class="morebtn press" data-act="heatMore">${ui.heatMore?"Less":"More"}</button>
+    </div>
+    ${habitHeats}`;
+  animNum($("#rrp"),rr);
+  tickMidnight();
+};
+function tickMidnight(){
+  const c=$("#midnight"); if(!c) return;
+  const now=new Date(); const mid=sod(addDays(now,1));
+  const left=mid-now;
+  c.textContent=pad(Math.floor(left/3600000))+":"+pad(Math.floor(left%3600000/60000))+":"+pad(Math.floor(left%60000/1000));
+}
+
+/* ================= OVERALL INSIGHTS ================= */
+const ATTRMETA=[["overall","Overall","--violet","bolt"],["wisdom","Wisdom","--blue","brain"],["focus","Focus","--green","target"],["confidence","Confidence","--amber","shield"]];
+RENDER.insights=function(){
+  const rr=computeRR(), a=attributes();
+  const step=S.xp%XP_PER_RR, nxt=Math.min(rr+1,99);
+  $("#view-insights").innerHTML=`
+    <div class="backrow"><button class="backbtn press" data-act="nav" data-arg="progress" aria-label="Back">${I.chevL}</button><h2>Overall Insights</h2></div>
+    <div class="card">
+      <div class="microlabel">Rating</div>
+      <div class="ratbig"><span id="ratrr"></span> <small>RR</small></div>
+      <div class="ratxp"><span id="ratxp"></span> XP</div>
+      <div class="rattrack"><div class="ratbar" style="width:${100*step/XP_PER_RR}%"></div></div>
+      <div class="ratnote">${step} | ${XP_PER_RR} XP to ${nxt} RR</div>
+    </div>
+    <button class="btn btn-primary btn-block bigbtn press" data-act="ladderOpen" style="justify-content:flex-start">${I.trophy}<span style="flex:1;text-align:left">Rank Ladder</span>${I.chevR}</button>
+    <h2 class="h20">Your Attributes</h2>
+    <div class="attrs">
+      ${ATTRMETA.map(([k,label,cv,ic])=>`
+        <div class="attr"><div class="attrtop" style="color:var(${cv})">${I[ic]}<span style="color:var(--dim)">${label}</span></div>
+        <div class="attrnum">${a[k]}</div>
+        <div class="attrtrack"><div class="attrbar" style="width:${a[k]}%;background:var(${cv})"></div></div></div>`).join("")}
+    </div>`;
+  animNum($("#ratrr"),rr);
+  animNum($("#ratxp"),S.xp);
+};
+
+/* ================= RANK LADDER ================= */
+RENDER.ladder=function(){
+  const myRank=rankFor(computeRR()).name;
+  const rows=RANKS.map((r,i)=>{
+    const nameColor=r.tier==="unreal"||r.tier==="champion"||r.tier==="elite"?"var(--violet-lite)"
+      :r.tier==="gold"?"var(--amber)":r.tier==="silver"?"var(--dim)"
+      :r.tier==="bronze"?"var(--bronze)":"var(--faint)";
+    const name=`<div class="lname" style="color:${nameColor}">${r.name}</div>`;
+    const stats=`<div class="lstats"><div class="lrr">${r.rr} RR</div><div class="lpct">${r.pct}</div></div>`;
+    const left=i%2===0?name:stats, right=i%2===0?stats:name;
+    return `<div class="lrow ${r.name===myRank?"me":""}">
+      <div class="lcell-l">${left}</div>
+      <div class="lbadge">${badgeSVG(r.tier)}</div>
+      <div class="lcell-r">${right}</div>
+    </div>`;}).join("");
+  $("#view-ladder").innerHTML=`
+    <div class="backrow"><button class="backbtn press" data-act="insightsOpen" aria-label="Back">${I.chevL}</button><h2>Rank Ladder</h2></div>
+    <div class="ladder"><div class="lpath"></div>${rows}</div>`;
+};
+
+/* ================= COMMUNITY ================= */
+function rankTier(name){ const r=RANKS.find(r=>r.name===name); return r?r.tier:"unranked"; }
+RENDER.community=function(){
+  let posts=[...S.posts];
+  const q=ui.commSearch.trim().toLowerCase();
+  if(q) posts=posts.filter(p=>(p.title+" "+p.body+" "+p.author).toLowerCase().includes(q));
+  if(ui.commFilter==="Top") posts.sort((a,b)=>b.votes-a.votes);
+  else if(ui.commFilter==="New") posts.sort((a,b)=>b.ts-a.ts);
+  else posts=posts.filter(p=>p.mine);        // Following → own posts only (no real accounts)
+  const cards=posts.length?posts.map(p=>`
+    <div class="card post" data-act="postOpen" data-arg="${p.id}">
+      <div class="phead">
+        <div class="pava" style="${avatarStyle(p.seed)}">${esc(p.author.charAt(0))}</div>
+        <div class="pmeta"><span class="pname">${esc(p.author)}</span>
+          <span class="prank">${esc(p.rank)}<span style="width:14px;height:14px;display:inline-block">${badgeSVG(rankTier(p.rank))}</span></span></div>
+        <button class="pvote ${p.votedByMe?"voted":""}" data-act="vote" data-arg="${p.id}" aria-label="Upvote">
+          ${p.votedByMe?I.upFill:I.up}<b>${p.votes}</b></button>
+      </div>
+      <div class="pts">${rel(p.ts)}</div>
+      <div class="ptitle">${esc(p.title)}</div>
+      <div class="pbody">${esc(p.body)}</div>
+      <div class="pfoot"><span class="pwm">${I.logo}ASCEND</span>
+        <span class="pcom">${I.chat}${p.comments.length}</span></div>
+    </div>`).join("")
+    :`<div class="empty">${ui.commFilter==="Following"?"You're not following anyone yet — posts you publish appear here.":"Nothing found."}</div>`;
+  $("#view-community").innerHTML=`
+    <div class="commhead"><h1>Community</h1>
+      <div class="cicons">
+        <button class="cico press" data-act="commSearch" aria-label="Search">${I.search}</button>
+        <button class="cico press" data-act="commChats" aria-label="My discussions">${I.chat}</button>
+        <button class="cico press" data-act="commCompose" aria-label="New post">${I.pen}</button>
+      </div></div>
+    <button class="filter press" data-act="commFilter">${ui.commFilter} ${I.chevD}</button>
+    ${q?`<div class="bnote" style="margin:-6px 0 12px">Filtering by “${esc(ui.commSearch)}” — <button data-act="commClearSearch" style="background:none;border:0;color:var(--violet-lite);cursor:pointer;font-size:11px;padding:0">clear</button></div>`:""}
+    ${cards}
+    <div class="commnote">Community posts live only in this browser — there is no real server behind this demo.</div>`;
+};
+
+/* ================= LIBRARY ================= */
+function bookProgress(b){ return S.library.progress[b.id]||0; }
+function coverStyle(b){ return `background:linear-gradient(150deg,var(${b.grad[0]}),var(${b.grad[1]}) 85%);`; }
+RENDER.library=function(){
+  const feat=BOOKS[0];
+  const mine=BOOKS.filter(b=>bookProgress(b)>0);
+  const list=ui.libTab==="discover"?BOOKS:mine;
+  const grid=list.length?`<div class="bookgrid">${list.map(b=>{
+      const p=bookProgress(b), done=p>=b.pages.length;
+      return `<div class="bk press" data-act="readBook" data-arg="${b.id}">
+        <div class="bkcover" style="${coverStyle(b)}">${esc(b.title)}${done?`<span class="bkdone">${I.check}</span>`:""}</div>
+        <div class="bkname">${esc(b.title)}</div><div class="bkauthor">${esc(b.author)}</div>
+        ${p>0?`<div class="bkprog"><div style="width:${Math.round(100*p/b.pages.length)}%"></div></div>`:""}
+      </div>`;}).join("")}</div>`
+    :`<div class="empty">Nothing here yet. Start a book from Discover and it shows up in your library.</div>`;
+  $("#view-library").innerHTML=`
+    <h1 class="vtitle">Library</h1>
+    <div class="libtabs">
+      <button class="libtab ${ui.libTab==="discover"?"active":""}" data-act="libTab" data-arg="discover">Discover</button>
+      <button class="libtab ${ui.libTab==="mine"?"active":""}" data-act="libTab" data-arg="mine">My Library</button>
+    </div>
+    ${ui.libTab==="discover"?`
+    <div class="card feat" data-act="readBook" data-arg="${feat.id}">
+      <div class="fcover" style="${coverStyle(feat)}">${esc(feat.title)}</div>
+      <div class="fmain"><div class="ftitle">${esc(feat.title)}</div>
+        <div class="fauthor">${esc(feat.author)}</div>
+        <div class="fdesc">${esc(feat.desc)}</div>
+        <div class="ffoot"><span class="fpages">${feat.pages.length} pages</span>
+          <button class="fread" data-act="readBook" data-arg="${feat.id}">Start reading →</button></div></div>
+    </div>
+    <div class="secrow"><span style="font-size:17px;font-weight:600">All Books</span><span class="countpill">${BOOKS.length} books</span></div>`:""}
+    ${grid}`;
+};
+
+/* reader */
+RENDER.reader=function(){
+  const b=BOOKS.find(x=>x.id===ui.readerBook); if(!b){show("library");return;}
+  const total=b.pages.length;
+  let p=clamp(S.library.progress[b.id]||0,0,total-1);
+  if((S.library.progress[b.id]||0)>=total) p=total-1;   // finished → reopen last page
+  const paras=b.pages[p].split("\n\n").map(t=>`<p>${esc(t)}</p>`).join("");
+  const last=p===total-1;
+  $("#view-reader").innerHTML=`
+    <div class="backrow"><button class="backbtn press" data-act="nav" data-arg="library" aria-label="Back to library">${I.chevL}</button><h2>${esc(b.title)}</h2></div>
+    <div class="rdtrack"><div class="rdbar" style="width:${Math.round(100*(p+1)/total)}%"></div></div>
+    <div class="rdauthor">${esc(b.author)}</div>
+    <div class="rdpage">${paras}</div>
+    <div class="rdctl">
+      <button class="rdbtn press" data-act="readerPrev" ${p===0?"disabled":""} aria-label="Previous page">${I.chevL}</button>
+      <span class="rdnum">Page ${p+1} of ${total}</span>
+      ${last
+        ?`<button class="btn btn-primary press" style="height:44px" data-act="readerFinish">Finish ✓</button>`
+        :`<button class="rdbtn press" data-act="readerNext" aria-label="Next page">${I.chevR}</button>`}
+    </div>`;
+};
+
+/* ================= modal helper ================= */
+function modal(html){
+  const m=el(`<div class="sheet" role="dialog" aria-modal="true"><div class="back" data-close="1"></div><div class="panel">${html}</div></div>`);
+  $("#modals").append(m);
+  m.addEventListener("click",e=>{ if(e.target.dataset&&e.target.dataset.close) m.remove(); });
+  return m;
+}
+const mhead=t=>`<div class="mtitle">${esc(t)}<button class="mx press" data-close-btn>${I.x}</button></div>`;
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){const s=$("#modals .sheet");if(s)s.remove();} });
+
+/* ================= actions ================= */
+const A={};
+A.nav=d=>show(d.arg);
+A.insightsOpen=()=>show("insights");
+A.ladderOpen=()=>show("ladder");
+A.heatMore=()=>{ui.heatMore=!ui.heatMore;RENDER.progress();};
+
+A.lockToggle=()=>{
+  if(!S.lockIn.active){ S.lockIn.active=true; S.lockIn.startedAt=Date.now(); save(); rerender(); }
+  else{
+    const m=modal(`${mhead("End lock in?")}
+      <p style="margin:0 0 4px;font-size:15px;color:var(--dim)">Your current lock-in run will end and be saved to history.</p>
+      <div class="btnrow"><button class="btn btn-ghost press" data-close-btn>Keep going</button>
+      <button class="btn btn-danger press" id="endlock">End lock in</button></div>`);
+    m.querySelector("#endlock").onclick=()=>{
+      S.lockIn.history=S.lockIn.history||[];
+      S.lockIn.history.push({start:S.lockIn.startedAt,end:Date.now()});
+      S.lockIn.active=false; S.lockIn.startedAt=null;
+      save(); m.remove(); rerender(); };
+  }
+};
+
+A.blockedEdit=()=>{
+  const m=modal(`${mhead("Blocked Items")}
+    <p style="margin:0 0 10px;font-size:13px;color:var(--faint)">Your personal avoid-list. The browser can't block apps or sites — this list is a commitment you keep yourself.</p>
+    <ul class="blist" id="blist"></ul>
+    <div class="addrow"><input class="inp" id="binp" placeholder="e.g. TikTok, news sites…" maxlength="40">
+    <button class="btn btn-primary press" id="badd" style="height:auto">Add</button></div>`);
+  const draw=()=>{ m.querySelector("#blist").innerHTML=S.lockIn.blockedItems.length
+      ? S.lockIn.blockedItems.map(b=>`<li>${I.globe.replace("<svg",'<svg style="width:16px;height:16px;color:var(--faint);flex:none"')}<span>${esc(b.name)}</span><button class="bdel press" data-del="${b.id}">${I.x}</button></li>`).join("")
+      : `<li style="border:0"><span style="color:var(--faint);font-weight:400">Nothing listed yet.</span></li>`;
+    m.querySelectorAll("[data-del]").forEach(btn=>btn.onclick=()=>{
+      S.lockIn.blockedItems=S.lockIn.blockedItems.filter(b=>b.id!==btn.dataset.del);save();draw();RENDER.home();});
+  };
+  const add=()=>{ const v=m.querySelector("#binp").value.trim(); if(!v)return;
+    S.lockIn.blockedItems.push({id:uid(),name:v}); m.querySelector("#binp").value="";
+    save(); draw(); RENDER.home(); };
+  m.querySelector("#badd").onclick=add;
+  m.querySelector("#binp").addEventListener("keydown",e=>{if(e.key==="Enter")add();});
+  draw();
+};
+
+A.goalAdd=()=>goalModal(null);
+A.goalOpen=d=>goalModal(S.goals.find(g=>g.id===d.arg));
+function goalModal(g){
+  const isNew=!g;
+  const dl=g?g.deadline:keyOf(addDays(new Date(),30));
+  const m=modal(`${mhead(isNew?"New Goal":"Edit Goal")}
+    <div class="flab">Title</div><input class="inp" id="gt" maxlength="80" placeholder="e.g. Read 5 books" value="${g?esc(g.title):""}">
+    <div class="flab">Deadline</div><input class="inp" type="date" id="gd" value="${dl}">
+    <div class="flab">Progress — <span id="gpv">${g?g.progress:0}</span>%</div>
+    <input type="range" id="gp" min="0" max="100" step="5" value="${g?g.progress:0}">
+    <div class="btnrow">${isNew?"":`<button class="btn btn-danger press" id="gdel">Delete</button>`}
+    <button class="btn btn-primary press" id="gsave">${isNew?"Add goal":"Save"}</button></div>`);
+  m.querySelector("#gp").oninput=e=>m.querySelector("#gpv").textContent=e.target.value;
+  m.querySelector("#gsave").onclick=()=>{
+    const title=m.querySelector("#gt").value.trim()||"Untitled goal";
+    const deadline=m.querySelector("#gd").value||dl;
+    const progress=Number(m.querySelector("#gp").value);
+    if(isNew) S.goals.push({id:uid(),title,deadline,progress});
+    else Object.assign(g,{title,deadline,progress});
+    save(); m.remove(); RENDER.home(); };
+  if(!isNew) m.querySelector("#gdel").onclick=()=>{
+    S.goals=S.goals.filter(x=>x.id!==g.id); save(); m.remove(); RENDER.home(); };
+}
+
+const HABIT_ICONS=["bolt","book","dumbbell","sun","moon","brain","phone","target"];
+A.habitAdd=()=>habitModal(null);
+A.habitOpen=(d,t,e)=>{ if(e.target.closest("[data-act=habitCheck]"))return;
+  habitModal(S.habits.find(h=>h.id===d.arg)); };
+function habitModal(h){
+  const isNew=!h;
+  const sel={color:h?h.color:"amber",icon:h?(h.icon||"bolt"):"bolt",target:h?h.target:1};
+  const m=modal(`${mhead(isNew?"New Habit":"Edit Habit")}
+    <div class="flab">Name</div><input class="inp" id="hn" maxlength="60" placeholder="e.g. Morning run" value="${h?esc(h.name):""}">
+    <div class="flab">Time</div><input class="inp" type="time" id="ht" value="${h?h.time:"09:00"}">
+    <div class="flab">Color</div><div class="swatches" id="hsw">
+      ${Object.keys(COLORS).map(k=>`<button class="sw press ${sel.color===k?"sel":""}" data-c="${k}" style="background:${cvar(k)}" aria-label="${k}"></button>`).join("")}</div>
+    <div class="flab">Icon</div><div class="swatches" id="hic" style="flex-wrap:wrap">
+      ${HABIT_ICONS.map(k=>`<button class="sw press ${sel.icon===k?"sel":""}" data-i="${k}" style="background:var(--card-hi);color:var(--dim);display:grid;place-items:center">${I[k].replace("<svg",'<svg style="width:16px;height:16px"')}</button>`).join("")}</div>
+    <div class="flab">Times per day</div><div class="stepper">
+      <button id="hm" aria-label="Less">−</button><b id="htg">${sel.target}</b><button id="hp" aria-label="More">+</button></div>
+    <div class="btnrow">${isNew?"":`<button class="btn btn-danger press" id="hdel">Delete</button>`}
+    <button class="btn btn-primary press" id="hsave">${isNew?"Add habit":"Save"}</button></div>`);
+  m.querySelector("#hsw").onclick=e=>{const b=e.target.closest("[data-c]");if(!b)return;sel.color=b.dataset.c;
+    m.querySelectorAll("#hsw .sw").forEach(x=>x.classList.toggle("sel",x===b));};
+  m.querySelector("#hic").onclick=e=>{const b=e.target.closest("[data-i]");if(!b)return;sel.icon=b.dataset.i;
+    m.querySelectorAll("#hic .sw").forEach(x=>x.classList.toggle("sel",x===b));};
+  m.querySelector("#hp").onclick=()=>{sel.target=clamp(sel.target+1,1,10);m.querySelector("#htg").textContent=sel.target;};
+  m.querySelector("#hm").onclick=()=>{sel.target=clamp(sel.target-1,1,10);m.querySelector("#htg").textContent=sel.target;};
+  m.querySelector("#hsave").onclick=()=>{
+    const name=m.querySelector("#hn").value.trim()||"New habit";
+    const time=m.querySelector("#ht").value||"09:00";
+    if(isNew) S.habits.push({id:uid(),name,color:sel.color,icon:sel.icon,time,schedule:"everyday",target:sel.target,log:{}});
+    else Object.assign(h,{name,time,color:sel.color,icon:sel.icon,target:sel.target});
+    save(); m.remove(); rerender(); };
+  if(!isNew) m.querySelector("#hdel").onclick=()=>{
+    S.habits=S.habits.filter(x=>x.id!==h.id); save(); m.remove(); rerender(); };
+}
+A.habitCheck=(d,t,e)=>{ e.stopPropagation();
+  const h=S.habits.find(x=>x.id===d.arg); if(!h)return;
+  const dk=todayKey(); h.log=h.log||{};
+  const n=h.log[dk]||0;
+  if(n>=h.target){ addXp(-XP_HABIT*n); h.log[dk]=0; }      // undo a full habit
+  else{ h.log[dk]=n+1; addXp(XP_HABIT); t.classList.add("burst"); }
+  checkDayBonus(); save(); rerender();
+};
+A.taskToggle=d=>{
+  const di=todayIdx(); const t=(S.tasks[di]||[]).find(x=>x.id===d.arg); if(!t)return;
+  t.done=!t.done; addXp(t.done?XP_TASK:-XP_TASK);
+  checkDayBonus(); save(); rerender();
+};
+
+A.focusDur=d=>{ui.focusDur=Number(d.arg);RENDER.focus();};
+A.focusStart=()=>startFocus();
+A.focusCancel=()=>finishFocus(false);
+A.focusViewAll=()=>{
+  const rows=[...S.focus].reverse().map(f=>`<div class="sessrow">
+    <span class="d">${f.date}</span><span>${f.minutes} min</span>
+    <span class="${f.completed?"ok":"bad"}">${f.completed?"Completed":"Abandoned"}</span></div>`).join("");
+  modal(`${mhead("All Sessions")}${rows||`<div class="empty">No sessions yet.</div>`}`);
+};
+
+A.vote=(d,t,e)=>{ e.stopPropagation();
+  const p=S.posts.find(x=>x.id===d.arg); if(!p)return;
+  p.votedByMe=!p.votedByMe; p.votes+=p.votedByMe?1:-1;
+  save(); RENDER.community(); };
+A.commFilter=()=>{
+  const m=modal(`${mhead("Sort posts")}
+    ${["Top","New","Following"].map(f=>`<button class="btn btn-ghost btn-block press" style="margin-bottom:10px;${ui.commFilter===f?"border-color:var(--violet);color:var(--violet-lite)":""}" data-f="${f}">${f}</button>`).join("")}`);
+  m.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{ui.commFilter=b.dataset.f;m.remove();RENDER.community();});
+};
+A.commSearch=()=>{
+  const m=modal(`${mhead("Search posts")}
+    <input class="inp" id="cs" placeholder="Search titles, text, authors…" value="${esc(ui.commSearch)}">
+    <div class="btnrow"><button class="btn btn-primary press" id="csgo">Search</button></div>`);
+  const go=()=>{ui.commSearch=m.querySelector("#cs").value;m.remove();RENDER.community();};
+  m.querySelector("#csgo").onclick=go;
+  m.querySelector("#cs").addEventListener("keydown",e=>{if(e.key==="Enter")go();});
+  m.querySelector("#cs").focus();
+};
+A.commClearSearch=()=>{ui.commSearch="";RENDER.community();};
+A.commChats=()=>{
+  const mine=S.posts.filter(p=>p.mine||p.comments.some(c=>c.a===(S.user&&S.user.name)));
+  modal(`${mhead("My Discussions")}${mine.length
+    ? mine.map(p=>`<div class="sessrow" data-act="postOpen" data-arg="${p.id}" style="cursor:pointer"><span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${esc(p.title)}</span><span class="d">${p.comments.length} comments</span></div>`).join("")
+    : `<div class="empty">Threads you post or comment in will show up here.</div>`}`);
+};
+A.commCompose=()=>{
+  const m=modal(`${mhead("New Post")}
+    <div class="flab">Title</div><input class="inp" id="pt" maxlength="120" placeholder="Day 14/60 — small win">
+    <div class="flab">Text</div><textarea class="inp" id="pb" maxlength="1000" placeholder="What happened? What did you learn?"></textarea>
+    <div class="btnrow"><button class="btn btn-primary press" id="ppub">Post</button></div>`);
+  m.querySelector("#ppub").onclick=()=>{
+    const title=m.querySelector("#pt").value.trim(), body=m.querySelector("#pb").value.trim();
+    if(!title&&!body)return;
+    S.posts.unshift({id:uid(),author:S.user.name||"You",rank:rankFor(computeRR()).name,seed:S.user.avatarSeed,
+      ts:Date.now(),votes:1,votedByMe:true,mine:true,title:title||"(untitled)",body,comments:[]});
+    save(); m.remove(); RENDER.community(); };
+};
+A.postOpen=d=>{
+  const p=S.posts.find(x=>x.id===d.arg); if(!p)return;
+  const m=modal(`
+    <div class="phead" style="margin-bottom:4px">
+      <div class="pava" style="${avatarStyle(p.seed)}">${esc(p.author.charAt(0))}</div>
+      <div class="pmeta"><span class="pname">${esc(p.author)}</span><span class="prank">${esc(p.rank)}</span></div>
+      <button class="mx press" data-close-btn>${I.x}</button></div>
+    <div class="pts">${rel(p.ts)}</div>
+    <div class="ptitle">${esc(p.title)}</div>
+    <p style="font-size:15px;color:var(--dim);margin:8px 0 16px">${esc(p.body)}</p>
+    <div class="lab" style="margin-bottom:4px">Comments · ${p.comments.length}</div>
+    <div id="clist">${p.comments.map(c=>`<div class="comment"><span class="ca">${esc(c.a)}</span><span class="ct">${rel(c.t)}</span><p>${esc(c.b)}</p></div>`).join("")||""}</div>
+    <div class="addrow"><input class="inp" id="cinp" maxlength="300" placeholder="Add a comment…">
+    <button class="btn btn-primary press" id="cadd" style="height:auto">Send</button></div>`);
+  const add=()=>{ const v=m.querySelector("#cinp").value.trim(); if(!v)return;
+    p.comments.push({a:S.user.name||"You",t:Date.now(),b:v}); save(); m.remove(); RENDER.community(); A.postOpen(d); };
+  m.querySelector("#cadd").onclick=add;
+  m.querySelector("#cinp").addEventListener("keydown",e=>{if(e.key==="Enter")add();});
+};
+
+A.libTab=d=>{ui.libTab=d.arg;RENDER.library();};
+A.readBook=(d,t,e)=>{ e.stopPropagation(); ui.readerBook=d.arg; show("reader"); };
+A.readerPrev=()=>{ const b=BOOKS.find(x=>x.id===ui.readerBook);
+  S.library.progress[b.id]=clamp((S.library.progress[b.id]||0)-1,0,b.pages.length-1); save(); RENDER.reader(); };
+A.readerNext=()=>{ const b=BOOKS.find(x=>x.id===ui.readerBook);
+  S.library.progress[b.id]=clamp((S.library.progress[b.id]||0)+1,0,b.pages.length-1); save(); RENDER.reader(); };
+A.readerFinish=()=>{ const b=BOOKS.find(x=>x.id===ui.readerBook);
+  S.library.progress[b.id]=b.pages.length; save(); show("library"); };
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-close-btn]");
+  if(t){ const s=t.closest(".sheet"); if(s){s.remove();return;} }
+  const a=e.target.closest("[data-act]");
+  if(a&&A[a.dataset.act]) A[a.dataset.act](a.dataset,a,e);
+});
+document.addEventListener("keydown",e=>{
+  if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches(".lockcirc")){e.preventDefault();A.lockToggle();}
+});
+
+/* ================= ONBOARDING ================= */
+const ob={step:0,name:"",areas:new Set(),extreme:false};
+function renderOnb(){
+  const box=$("#onb"); box.hidden=false;
+  const steps=5, bar=`<div class="obar"><div style="width:${(ob.step+1)/steps*100}%"></div></div>`;
+  let body="";
+  if(ob.step===0) body=`
+    <div class="ostep"><div class="ohero">
+      <div class="biglock" style="color:var(--violet-lite)">${I.lock}</div>
+      <h1 class="oh1">60 days.<br><span>One locked-in you.</span></h1>
+      <p class="osub">Pick a few battles, show up daily, and watch your rank climb. Everything is stored on this device only.</p>
+    </div><div class="ofoot"><button class="btn btn-primary btn-block bigbtn press" id="onext">Get started</button></div></div>`;
+  else if(ob.step===1) body=`
+    <div class="ostep"><div class="ohero" style="align-items:stretch;text-align:left">
+      <h1 class="oh1">What should we<br><span>call you?</span></h1>
+      <p class="osub" style="margin:0">Shown on your posts and profile.</p>
+      <input class="oinp" id="oname" maxlength="40" placeholder="Your name" value="${esc(ob.name)}">
+    </div><div class="ofoot"><button class="btn btn-primary btn-block bigbtn press" id="onext">Continue</button></div></div>`;
+  else if(ob.step===2) body=`
+    <div class="ostep"><h1 class="oh1">Choose your<br><span>battles.</span></h1>
+      <p class="osub" style="margin:0;text-align:left;max-width:none">Pick 2–4 areas. Each one becomes a daily task in your plan.</p>
+      <div class="areagrid">${AREAS.map(a=>`
+        <button class="area press ${ob.areas.has(a.id)?"sel":""}" data-area="${a.id}">${I[a.icon]}<b>${a.name}</b><span>${a.hint}</span></button>`).join("")}</div>
+      <div class="ofoot"><div class="ocount" id="ocount"></div>
+      <button class="btn btn-primary btn-block bigbtn press" id="onext">Continue</button></div></div>`;
+  else if(ob.step===3) body=`
+    <div class="ostep"><h1 class="oh1">Pick your<br><span>intensity.</span></h1>
+      <button class="modecard press ${!ob.extreme?"sel":""}" data-mode="0"><b>${I.sun.replace("<svg",'<svg style="color:var(--violet-lite)"')}Normal</b>
+        <p>One completed thing keeps the streak alive. Sustainable and forgiving.</p></button>
+      <button class="modecard press ${ob.extreme?"sel":""}" data-mode="1"><b>${I.bolt.replace("<svg",'<svg style="width:16px;height:16px;color:var(--amber)"')}Extreme</b>
+        <p>The streak survives only a 100% day, and leaving mid-focus-session fails it. No mercy.</p></button>
+      <div class="ofoot"><button class="btn btn-primary btn-block bigbtn press" id="onext">Continue</button></div></div>`;
+  else body=`
+    <div class="ostep"><div class="ohero">
+      <h1 class="oh1">Building your<br><span>60-day plan…</span></h1>
+      <div class="planbar"><div id="pbar" style="width:0%"></div></div>
+      <div id="pready" style="visibility:hidden"><div class="plandone">${I.check}Plan ready</div>
+        <p class="osub" style="margin-top:10px">${[...ob.areas].map(id=>AREAS.find(a=>a.id===id).name).join(" · ")}</p></div>
+    </div><div class="ofoot"><button class="btn btn-primary btn-block bigbtn press" id="onext" disabled style="opacity:.4">Enter Day 1</button></div></div>`;
+  box.innerHTML=bar+body;
+  const next=box.querySelector("#onext");
+  if(ob.step===1){ const inp=box.querySelector("#oname");
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")next.click();}); setTimeout(()=>inp.focus(),80); }
+  if(ob.step===2){
+    const count=()=>{ box.querySelector("#ocount").textContent=`${ob.areas.size} of 2–4 selected`;
+      const ok=ob.areas.size>=2&&ob.areas.size<=4; next.disabled=!ok; next.style.opacity=ok?1:.4; };
+    box.querySelectorAll("[data-area]").forEach(b=>b.onclick=()=>{
+      const id=b.dataset.area;
+      if(ob.areas.has(id)) ob.areas.delete(id);
+      else if(ob.areas.size<4) ob.areas.add(id);
+      b.classList.toggle("sel",ob.areas.has(id)); count(); });
+    count(); }
+  if(ob.step===3) box.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
+    ob.extreme=b.dataset.mode==="1";
+    box.querySelectorAll(".modecard").forEach(x=>x.classList.toggle("sel",x===b)); });
+  if(ob.step===4){ let p=0;
+    const iv=setInterval(()=>{ p+=REDUCED()?100:7+Math.random()*9;
+      const bar2=box.querySelector("#pbar"); if(!bar2){clearInterval(iv);return;}
+      bar2.style.width=Math.min(100,p)+"%";
+      if(p>=100){ clearInterval(iv);
+        box.querySelector("#pready").style.visibility="visible";
+        next.disabled=false; next.style.opacity=1; } },120); }
+  next.onclick=()=>{
+    if(next.disabled) return;
+    if(ob.step===1){ ob.name=box.querySelector("#oname").value.trim()||"Climber"; }
+    if(ob.step===4){ finishOnb(); return; }
+    ob.step++; renderOnb(); };
+}
+function finishOnb(){
+  S.user={name:ob.name||"Climber",avatarSeed:Math.floor(Math.random()*AVA_GRADS.length),
+    startDate:todayKey(),extreme:ob.extreme,areas:[...ob.areas]};
+  ensureAllTasks(); save();
+  $("#onb").hidden=true; boot(false);
+}
+
+/* ================= background fx ================= */
+(function stars(){
+  const bg=$("#bgfx"); let html="";
+  for(let i=0;i<52;i++){
+    const sz=Math.random()<.6?1:2, o=(.10+Math.random()*.25).toFixed(2);
+    const tw=Math.random()<.18?" tw":"";
+    html+=`<span class="star${tw}" style="left:${(Math.random()*100).toFixed(1)}%;top:${(Math.random()*100).toFixed(1)}%;width:${sz}px;height:${sz}px;opacity:${o};--so:${o};animation-delay:${(Math.random()*4).toFixed(1)}s"></span>`;
+  }
+  [18,46,74].forEach(t=>{html+=`<span class="slash" style="top:${t}%"></span>`;});
+  bg.innerHTML=html;
+})();
+
+/* ================= tick + boot ================= */
+setInterval(()=>{
+  if(S.lockIn.active&&ui.view==="home") tickLock();
+  if(ui.view==="progress") tickMidnight();
+  if(S.focusRun&&!$("#overlay").hidden) tickOverlay();
+},1000);
+
+function boot(fromLoad){
+  if(fromLoad) load();
+  if(!S.user){ $("#shell").hidden=true; renderOnb(); return; }
+  ensureAllTasks(); checkDayBonus(); save();
+  $("#onb").hidden=true; $("#shell").hidden=false;
+  renderHeader(); renderTabs(); show(ui.view);
+  if(S.focusRun){ if(Date.now()>=S.focusRun.end) finishFocus(true); else showOverlay(); }
+  if(!storage.ok){ const n=el(`<div class="commnote" style="position:fixed;bottom:calc(70px + env(safe-area-inset-bottom));left:0;right:0;z-index:40">Storage unavailable — progress lives in memory for this visit only.</div>`); document.body.append(n); }
+}
+boot(true);
+</script>
+</body>
+</html>
